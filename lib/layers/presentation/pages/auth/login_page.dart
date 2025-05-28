@@ -1,0 +1,177 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:gap/gap.dart';
+import 'package:fastfood/layers/application/cubit/auth_cubit.dart';
+import 'package:fastfood/layers/presentation/widgets/custom_text_field.dart';
+import 'package:fastfood/layers/presentation/widgets/custom_button.dart';
+import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
+import 'package:fastfood/layers/presentation/pages/home_page.dart';
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email is required';
+    }
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Password is required';
+    }
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return null;
+  }
+
+  void _login() {
+    if (_formKey.currentState!.validate()) {
+      context.read<AuthCubit>().login(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: BlocListener<AuthCubit, AuthState>(
+        listener: (context, state) {
+          if (state.status == AuthStatus.authenticated) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const HomePage()),
+              (route) => false,
+            );
+          } else if (state.status == AuthStatus.error &&
+              state.errorMessage != null) {
+            ShowSnackBar.show(context, state.errorMessage!);
+          }
+        },
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Gap(60.h),
+
+                  // Logo/Header Section
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 100.w,
+                          height: 100.h,
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.fastfood,
+                            size: 50.sp,
+                            color: Colors.amber.shade700,
+                          ),
+                        ),
+                        Gap(24.h),
+                        Text(
+                          'Welcome Back!',
+                          style: TextStyle(
+                            fontSize: 28.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Gap(8.h),
+                        Text(
+                          'Sign in to continue to FastFood',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Gap(48.h),
+
+                  // Email Field
+                  CustomTextField(
+                    controller: _emailController,
+                    hintText: 'Enter your email',
+                    labelText: 'Email Address',
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    validator: _validateEmail,
+                    prefixIcon: Icon(
+                      Icons.email_outlined,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+
+                  Gap(20.h),
+
+                  // Password Field
+                  CustomTextField(
+                    controller: _passwordController,
+                    hintText: 'Enter your password',
+                    labelText: 'Password',
+                    isPassword: true,
+                    textInputAction: TextInputAction.done,
+                    validator: _validatePassword,
+                    prefixIcon: Icon(
+                      Icons.lock_outline,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+
+                  Gap(32.h),
+
+                  // Login Button
+                  BlocBuilder<AuthCubit, AuthState>(
+                    builder: (context, state) {
+                      return CustomButton(
+                        text: 'Sign In',
+                        onPressed: _login,
+                        isLoading: state.isLoading,
+                      );
+                    },
+                  ),
+
+                  Gap(40.h),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
