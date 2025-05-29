@@ -31,6 +31,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Ensure Google Play Services compatibility
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -44,4 +47,15 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Google Play Services base (helps with ProviderInstaller)
+    implementation 'com.google.android.gms:play-services-base:18.2.0'
+
+    // Multidex support for Google Play Services
+    implementation 'androidx.multidex:multidex:2.0.1'
+
+    // Optional: Explicit ProviderInstaller dependency
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
 }

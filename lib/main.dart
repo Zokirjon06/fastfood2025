@@ -1,6 +1,7 @@
 import 'package:fastfood/di/di.dart';
 import 'package:fastfood/firebase_options.dart';
 import 'package:fastfood/layers/application/cubit/auth_cubit.dart';
+import 'package:fastfood/layers/application/cubit/get_product_cubit.dart';
 import 'package:fastfood/layers/presentation/pages/auth/login_page.dart';
 import 'package:fastfood/layers/presentation/pages/home_page.dart';
 import 'package:fastfood/layers/presentation/pages/screens/order_lis_page.dart';
@@ -14,13 +15,22 @@ import 'package:path_provider/path_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   print('✅ Firebase initialized successfully');
+
+  // Initialize Hive
   final appDocumentDirectory = await getApplicationDocumentsDirectory();
   Hive.init(appDocumentDirectory.path);
   await Hive.openBox("workType");
+
+  // Initialize dependency injection
+  await initializeDependencies();
+  print('✅ Dependencies initialized successfully');
+
   runApp(const MyApp());
   // runApp(
   //   DevicePreview(
@@ -46,10 +56,10 @@ class _MyAppState extends State<MyApp> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => productCubit..getProducts(query),
+          create: (_) => sl<ProductCubit>()..getProducts(query),
         ),
         BlocProvider(
-          create: (_) => authCubit,
+          create: (_) => sl<AuthCubit>(),
         ),
       ],
       child: ScreenUtilInit(
@@ -57,32 +67,30 @@ class _MyAppState extends State<MyApp> {
         minTextAdapt: true,
         splitScreenMode: true,
         builder: (context, child) => MaterialApp(
-          debugShowCheckedModeBanner: false,
-          home: BlocBuilder<AuthCubit, AuthState>(
-            builder: (context, authState) {
-              // If user is authenticated, show the appropriate page based on role
-              if (authState.status == AuthStatus.authenticated) {
-                return auth.values.isEmpty
-                    ? SplashPage()
-                    : auth.values.first == 'admin'
-                        ? HomePage()
-                        : OrderListPage();
-              }
+            debugShowCheckedModeBanner: false,
+            home: BlocBuilder<AuthCubit, AuthState>(
+              builder: (context, authState) {
+                switch (authState.status) {
+                  case AuthStatus.authenticated:
+                    // Check for role in authentication values
+                    if (auth.values.isEmpty) {
+                      return const SplashPage();
+                    } else if (auth.values.first == 'admin') {
+                      return const HomePage();
+                    } else {
+                      return const OrderListPage();
+                    }
 
-              // If user is not authenticated, show login page
-              if (authState.status == AuthStatus.unauthenticated) {
-                return LoginPage();
-              }
+                  case AuthStatus.unauthenticated:
+                  case AuthStatus.error:
+                    return const LoginPage();
 
-              // For initial/loading states, show splash or loading
-              return auth.values.isEmpty
-                  ? SplashPage()
-                  : auth.values.first == 'admin'
-                      ? HomePage()
-                      : OrderListPage();
-            },
-          ),
-        ),
+                  case AuthStatus.initial:
+                  case AuthStatus.loading:
+                    return const SplashPage(); // Show splash during init/load
+                }
+              },
+            )),
       ),
     );
   }

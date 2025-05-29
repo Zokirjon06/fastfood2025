@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fastfood/layers/application/cubit/get_product_cubit.dart';
+import 'package:fastfood/layers/application/cubit/auth_cubit.dart';
 import 'package:fastfood/layers/domain/entity/order_entity.dart';
 import 'package:fastfood/layers/domain/entity/product_entity.dart';
+import 'package:fastfood/layers/presentation/extension/extensions.dart';
 import 'package:fastfood/layers/presentation/pages/screens/add_desk_id.dart';
+import 'package:fastfood/layers/presentation/pages/screens/admin_page.dart';
 import 'package:fastfood/layers/presentation/pages/splash_page.dart';
+import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -53,24 +57,53 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  /// Shows a confirmation dialog before logging out
+ 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         scrolledUnderElevation: 0,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          'FastFood Admin',
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
         leading: IconButton(
+          onPressed: () {
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (context) => SplashPage()));
+          },
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        actions: [
+          // Add Product Button
+          IconButton(
             onPressed: () {
-              Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (context) => SplashPage()));
+              // TODO: Implement add product functionality
             },
-            icon: Icon(Icons.arrow_back_ios)),
-            actions: [
-              IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.add, size: MediaQuery.of(context).size.width * 0.08)
-              ),
-            ],
+            icon: Icon(
+              Icons.add,
+              size: MediaQuery.sizeOf(context).width * 0.08,
+              color: Colors.amber.shade700,
+            ),
+            tooltip: 'Add Product',
+          ),
+          Gap(8.w),
+
+          
+     
+        ],
       ),
       backgroundColor: Colors.white,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -270,7 +303,7 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                           Gap(6.h),
                                           Text(
-                                            "${product.price.toStringAsFixed(2)} so'm",
+                                            "${product.price.toMoney()} so'm",
                                             style: TextStyle(
                                                 fontSize: 16.sp,
                                                 color: Colors.deepOrange),

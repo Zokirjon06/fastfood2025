@@ -1,12 +1,12 @@
+import 'package:fastfood/layers/presentation/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:fastfood/layers/application/cubit/auth_cubit.dart';
 import 'package:fastfood/layers/presentation/widgets/custom_text_field.dart';
-import 'package:fastfood/layers/presentation/widgets/custom_button.dart';
 import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
-import 'package:fastfood/layers/presentation/pages/home_page.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -49,6 +49,9 @@ class _LoginPageState extends State<LoginPage> {
 
   void _login() {
     if (_formKey.currentState!.validate()) {
+      // Clear any previous errors before attempting login
+      context.read<AuthCubit>().clearError();
+
       context.read<AuthCubit>().login(
             email: _emailController.text.trim(),
             password: _passwordController.text,
@@ -58,21 +61,37 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: BlocListener<AuthCubit, AuthState>(
-        listener: (context, state) {
-          if (state.status == AuthStatus.authenticated) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const HomePage()),
-              (route) => false,
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        // Only handle error display here - navigation is handled by main app routing
+        if (state.status == AuthStatus.error && state.errorMessage != null) {
+          ShowSnackBar.show(context, state.errorMessage!);
+        }
+        // if (state.status == AuthStatus.authenticated) {
+        //   Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => HomePage()), (route) => false);
+        // }
+      },
+      child: Scaffold(
+        floatingActionButton: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            return FloatingActionButton(
+              onPressed: state.isLoading ? null : _login, // Disable when loading
+              shape: const CircleBorder(),
+              backgroundColor: state.isLoading ? Colors.grey : Colors.amber,
+              child: state.isLoading
+                  ? const CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    )
+                  : Icon(
+                      Icons.login,
+                      size: 30.sp,
+                      color: Colors.white,
+                    ),
             );
-          } else if (state.status == AuthStatus.error &&
-              state.errorMessage != null) {
-            ShowSnackBar.show(context, state.errorMessage!);
-          }
-        },
-        child: SafeArea(
+          },
+        ),
+        body: SafeArea(
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Form(
@@ -150,19 +169,6 @@ class _LoginPageState extends State<LoginPage> {
                       Icons.lock_outline,
                       color: Colors.grey.shade500,
                     ),
-                  ),
-
-                  Gap(32.h),
-
-                  // Login Button
-                  BlocBuilder<AuthCubit, AuthState>(
-                    builder: (context, state) {
-                      return CustomButton(
-                        text: 'Sign In',
-                        onPressed: _login,
-                        isLoading: state.isLoading,
-                      );
-                    },
                   ),
 
                   Gap(40.h),

@@ -71,6 +71,19 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.clearError());
   }
 
+  void logout() async {
+    try {
+      await _authRepository.signOut();
+      // The authStateChanges stream will automatically emit unauthenticated state
+    } catch (e) {
+      emit(state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: 'Failed to logout: ${e.toString()}',
+        isLoading: false,
+      ));
+    }
+  }
+
   @override
   Future<void> close() {
     _authStateSubscription.cancel();
