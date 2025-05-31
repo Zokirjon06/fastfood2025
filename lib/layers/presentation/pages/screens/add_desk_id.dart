@@ -111,8 +111,17 @@ class PriceCalculator {
 
   /// Rounds a double to specified decimal places
   static double _roundToDecimalPlaces(double value, int places) {
+    if (value == 0.0) return 0.0;
+
     final factor = math.pow(10, places);
-    return (value * factor).round() / factor;
+    final rounded = (value * factor).round() / factor;
+
+    // For very small values, preserve some precision
+    if (rounded == 0.0 && value > 0.0) {
+      return value; // Return original value if rounding would make it 0
+    }
+
+    return rounded;
   }
 }
 

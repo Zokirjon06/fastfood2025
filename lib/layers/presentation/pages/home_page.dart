@@ -25,20 +25,34 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  late TabController _tabController;
+  // Controllers and focus nodes
+  late final TabController _tabController;
+  late final PageController _pageController;
+  late final TextEditingController _searchController;
+  late final FocusNode _searchFocusNode;
+
+  // State variables
   List<ProductEntity> selectedProducts = [];
   List<OrderEntity>? order;
+  bool _isSearchMode = false;
+  int _currentPage = 0;
   bool send = false;
   int shop = 0;
   double money = 0;
-  bool _isSearchMode = false;
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode();
+
+  // Constants for better performance
+  static const int _itemsPerPage = 6; // 6 products per page (2x3 grid)
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize all controllers
     _tabController = TabController(length: 2, vsync: this);
+    _pageController = PageController();
+    _searchController = TextEditingController();
+    _searchFocusNode = FocusNode();
+
     // Listen to search controller changes to update clear button
     _searchController.addListener(() {
       setState(() {});
@@ -50,6 +64,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _tabController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -73,6 +88,60 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Clear search results
     context.read<ProductCubit>().getProducts('');
     _searchFocusNode.unfocus();
+  }
+
+  /// Calculates total number of pages based on products count
+  int _getTotalPages(int totalProducts) {
+    return (totalProducts / _itemsPerPage).ceil();
+  }
+
+  /// Gets products for current page
+  List<ProductEntity> _getProductsForPage(List<ProductEntity> allProducts, int page) {
+    final startIndex = page * _itemsPerPage;
+    final endIndex = (startIndex + _itemsPerPage).clamp(0, allProducts.length);
+
+    if (startIndex >= allProducts.length) return [];
+    return allProducts.sublist(startIndex, endIndex);
+  }
+
+  /// Navigates to next page
+  void _nextPage(int totalPages) {
+    if (_currentPage < totalPages - 1) {
+      setState(() {
+        _currentPage++;
+      });
+      _pageController.animateToPage(
+        _currentPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  /// Navigates to previous page
+  void _previousPage() {
+    if (_currentPage > 0) {
+      setState(() {
+        _currentPage--;
+      });
+      _pageController.animateToPage(
+        _currentPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  /// Navigates to specific page
+  void _goToPage(int page) {
+    setState(() {
+      _currentPage = page;
+    });
+    _pageController.animateToPage(
+      page,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   /// Shows the add product modal
@@ -103,7 +172,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       final firestore = FirebaseFirestore.instance;
 
       final items = selectedProducts.map((product) {
-        final totalWithServiceCharge = product.price * 1.08; // Add 8%
+        final totalWithServiceCharge = product.price; // Add 8%
         return OrderItem(
           name: product.name,
           quantity: totalWithServiceCharge,
@@ -352,8 +421,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  /// Builds the search view (just the product grid)
+  /// Builds the search view with pagination
   Widget _buildSearchView() {
+    // Reset to first page when entering search mode
+    if (_currentPage != 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _currentPage = 0;
+        });
+        _pageController.animateToPage(0, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+      });
+    }
     return _buildProductView();
   }
 
@@ -380,8 +458,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     );
                   }
 
-                  final products = state.products;
-                  if (products.isEmpty) {
+                  final allProducts = state.products;
+                  if (allProducts.isEmpty) {
                     return Center(
                       child: Text(
                         "Ma'lumot yo'q",
@@ -390,169 +468,43 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     );
                   }
 
-                  return MasonryGridView.count(
-                    crossAxisCount: MediaQuery.of(context).size.width >= 1025
-                        ? 6
-                        : MediaQuery.of(context).size.width >= 600
-                            ? 4
-                            : 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    itemCount: products.length,
-                    itemBuilder: (context, index) {
-                      final product = products[index];
-                      final isSelected = selectedProducts.contains(product);
+                  // Calculate pagination
+                  final totalPages = _getTotalPages(allProducts.length);
 
-                      return Stack(
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                selectedProducts.add(product);
-                                money += product.price;
-                                shop++;
+                  // Reset current page if it exceeds total pages
+                  if (_currentPage >= totalPages) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      setState(() {
+                        _currentPage = 0;
+                      });
+                    });
+                  }
 
-                                send = selectedProducts.isNotEmpty;
-                              });
-                            },
-                            child: Container(
-                              padding: EdgeInsets.only(bottom: 20.h),
-                              decoration: BoxDecoration(
-                                color: isSelected && send
-                                    ? Colors.yellow.shade100
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(15.r),
-                                border: Border.all(
-                                    color: Colors.grey.shade300, width: 1),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withValues(alpha: 0.2),
-                                    blurRadius: 6,
-                                    offset: Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.vertical(
-                                        top: Radius.circular(15.r)),
-                                    child: product.hasLocalImage
-                                        ? Image.file(
-                                            File(product.localImagePath!),
-                                            height: 130.h,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return product.hasUploadedImage
-                                                  ? Image.network(
-                                                      product.imageUrl!,
-                                                      height: 130.h,
-                                                      width: double.infinity,
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder: (context, error, stackTrace) {
-                                                        return Container(
-                                                          height: 130.h,
-                                                          width: double.infinity,
-                                                          color: Colors.grey.shade300,
-                                                          child: const Icon(
-                                                            Icons.image_not_supported,
-                                                            size: 50,
-                                                          ),
-                                                        );
-                                                      },
-                                                    )
-                                                  : Container(
-                                                      height: 130.h,
-                                                      width: double.infinity,
-                                                      color: Colors.grey.shade300,
-                                                      child: const Icon(
-                                                        Icons.image_not_supported,
-                                                        size: 50,
-                                                      ),
-                                                    );
-                                            },
-                                          )
-                                        : product.hasUploadedImage
-                                            ? Image.network(
-                                                product.imageUrl!,
-                                                height: 130.h,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) {
-                                                  return Container(
-                                                    height: 130.h,
-                                                    width: double.infinity,
-                                                    color: Colors.grey.shade300,
-                                                    child: const Icon(
-                                                      Icons.image_not_supported,
-                                                      size: 50,
-                                                    ),
-                                                  );
-                                                },
-                                              )
-                                            : Container(
-                                                height: 130.h,
-                                                width: double.infinity,
-                                                color: Colors.grey.shade300,
-                                                child: const Icon(
-                                                  Icons.image_not_supported,
-                                                  size: 50,
-                                                ),
-                                              ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.all(10.w),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          product.name,
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18.sp),
-                                        ),
-                                        Gap(6.h),
-                                        Text(
-                                          "${product.price.toMoney()} so'm",
-                                          style: TextStyle(
-                                              fontSize: 16.sp,
-                                              color: Colors.deepOrange),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          if (isSelected && send)
-                            Positioned(
-                              top: 0,
-                              right: 0,
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.remove_circle,
-                                  color: Colors.red,
-                                  size: 28,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    if (isSelected) {
-                                      selectedProducts.remove(product);
-                                      money -= product.price;
-                                      shop--;
-                                    }
-                                    send = selectedProducts.isNotEmpty;
-                                  });
-                                },
-                              ),
-                            ),
-                        ],
-                      );
-                    },
+                  return Column(
+                    children: [
+                      // Page indicator and info
+                      if (totalPages > 1) _buildPageHeader(allProducts.length, totalPages),
+
+                      // Products grid with pagination
+                      Expanded(
+                        child: PageView.builder(
+                          controller: _pageController,
+                          onPageChanged: (page) {
+                            setState(() {
+                              _currentPage = page;
+                            });
+                          },
+                          itemCount: totalPages,
+                          itemBuilder: (context, pageIndex) {
+                            final pageProducts = _getProductsForPage(allProducts, pageIndex);
+                            return _buildProductGrid(pageProducts);
+                          },
+                        ),
+                      ),
+
+                      // Page navigation controls
+                      if (totalPages > 1) _buildPageNavigation(totalPages),
+                    ],
                   );
                 },
               ),
@@ -560,6 +512,285 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Gap(20.h),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Builds the page header with current page info
+  Widget _buildPageHeader(int totalProducts, int totalPages) {
+    final startItem = (_currentPage * _itemsPerPage) + 1;
+    final endItem = ((_currentPage + 1) * _itemsPerPage).clamp(1, totalProducts);
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      margin: EdgeInsets.only(bottom: 16.h),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.amber.shade200),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Mahsulotlar: $startItem-$endItem / $totalProducts',
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.amber.shade800,
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade700,
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              'Sahifa ${_currentPage + 1}/$totalPages',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the product grid for a specific page
+  Widget _buildProductGrid(List<ProductEntity> products) {
+    return MasonryGridView.count(
+      crossAxisCount: MediaQuery.of(context).size.width >= 1025
+          ? 6
+          : MediaQuery.of(context).size.width >= 600
+              ? 4
+              : 2,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        final isSelected = selectedProducts.contains(product);
+
+        return Stack(
+          children: [
+            InkWell(
+              onTap: () {
+                setState(() {
+                  selectedProducts.add(product);
+                  money += product.price;
+                  shop++;
+
+                  send = selectedProducts.isNotEmpty;
+                });
+              },
+              child: Container(
+                padding: EdgeInsets.only(bottom: 20.h),
+                decoration: BoxDecoration(
+                  color: isSelected && send
+                      ? Colors.yellow.shade100
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(15.r),
+                  border: Border.all(
+                      color: Colors.grey.shade300, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withValues(alpha: 0.2),
+                      blurRadius: 6,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(15.r)),
+                      child: product.hasLocalImage
+                          ? Image.file(
+                              File(product.localImagePath!),
+                              height: 130.h,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return product.hasUploadedImage
+                                    ? Image.network(
+                                        product.imageUrl!,
+                                        height: 130.h,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            height: 130.h,
+                                            width: double.infinity,
+                                            color: Colors.grey.shade300,
+                                            child: const Icon(
+                                              Icons.image_not_supported,
+                                              size: 50,
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    : Container(
+                                        height: 130.h,
+                                        width: double.infinity,
+                                        color: Colors.grey.shade300,
+                                        child: const Icon(
+                                          Icons.image_not_supported,
+                                          size: 50,
+                                        ),
+                                      );
+                              },
+                            )
+                          : product.hasUploadedImage
+                              ? Image.network(
+                                  product.imageUrl!,
+                                  height: 130.h,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      height: 130.h,
+                                      width: double.infinity,
+                                      color: Colors.grey.shade300,
+                                      child: const Icon(
+                                        Icons.image_not_supported,
+                                        size: 50,
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Container(
+                                  height: 130.h,
+                                  width: double.infinity,
+                                  color: Colors.grey.shade300,
+                                  child: const Icon(
+                                    Icons.image_not_supported,
+                                    size: 50,
+                                  ),
+                                ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(10.w),
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.name,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18.sp),
+                          ),
+                          Gap(6.h),
+                          Text(
+                            "${product.price.toMoney()} so'm",
+                            style: TextStyle(
+                                fontSize: 16.sp,
+                                color: Colors.deepOrange),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (isSelected && send)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.remove_circle,
+                    color: Colors.red,
+                    size: 28,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      if (isSelected) {
+                        selectedProducts.remove(product);
+                        money -= product.price;
+                        shop--;
+                      }
+                      send = selectedProducts.isNotEmpty;
+                    });
+                  },
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Builds the page navigation controls
+  Widget _buildPageNavigation(int totalPages) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 16.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Previous button
+          IconButton(
+            onPressed: _currentPage > 0 ? _previousPage : null,
+            icon: Icon(
+              Icons.chevron_left,
+              size: 32.sp,
+              color: _currentPage > 0 ? Colors.amber.shade700 : Colors.grey.shade400,
+            ),
+          ),
+
+          Gap(16.w),
+
+          // Page indicators
+          Row(
+            children: List.generate(totalPages, (index) {
+              final isCurrentPage = index == _currentPage;
+              return GestureDetector(
+                onTap: () => _goToPage(index),
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: 4.w),
+                  width: isCurrentPage ? 32.w : 24.w,
+                  height: isCurrentPage ? 32.h : 24.h,
+                  decoration: BoxDecoration(
+                    color: isCurrentPage ? Colors.amber.shade700 : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: isCurrentPage
+                        ? Border.all(color: Colors.amber.shade900, width: 2)
+                        : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${index + 1}',
+                      style: TextStyle(
+                        fontSize: isCurrentPage ? 14.sp : 12.sp,
+                        fontWeight: isCurrentPage ? FontWeight.bold : FontWeight.normal,
+                        color: isCurrentPage ? Colors.white : Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+
+          Gap(16.w),
+
+          // Next button
+          IconButton(
+            onPressed: _currentPage < totalPages - 1 ? () => _nextPage(totalPages) : null,
+            icon: Icon(
+              Icons.chevron_right,
+              size: 32.sp,
+              color: _currentPage < totalPages - 1 ? Colors.amber.shade700 : Colors.grey.shade400,
+            ),
+          ),
+        ],
       ),
     );
   }
