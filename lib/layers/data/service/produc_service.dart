@@ -16,7 +16,7 @@ class ProductService {
 
     final snapshot = await _productsRef
         .where('name', isGreaterThanOrEqualTo: formattedQuery)
-        .where('name', isLessThan: formattedQuery + 'z')
+        .where('name', isLessThan: '${formattedQuery}z')
         .get();
 
     final products = snapshot.docs.map((doc) {

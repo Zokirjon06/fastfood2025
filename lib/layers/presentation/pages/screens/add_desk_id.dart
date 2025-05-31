@@ -293,7 +293,7 @@ class _AddDeskIdState extends State<AddDeskId> {
               ),
               Gap(12.w),
               Text(
-                'Confirm Desk Selection',
+                'Stol tanlashni tasdiqlash',
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
@@ -334,7 +334,7 @@ class _AddDeskIdState extends State<AddDeskId> {
               ),
               Gap(16.h),
               Text(
-                'Are you sure?',
+                'Ishonchingiz komilmi?',
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
@@ -343,7 +343,7 @@ class _AddDeskIdState extends State<AddDeskId> {
               ),
               Gap(8.h),
               Text(
-                'Do you want to accept orders for this desk?',
+                'Ushbu stol uchun buyurtmalarni qabul qilmoqchimisiz?',
                 style: TextStyle(
                   fontSize: 16.sp,
                   color: Colors.grey.shade700,
@@ -355,7 +355,7 @@ class _AddDeskIdState extends State<AddDeskId> {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: Text(
-                'Cancel',
+                'Bekor qilish',
                 style: TextStyle(
                   fontSize: 16.sp,
                   color: Colors.grey.shade600,
@@ -374,7 +374,7 @@ class _AddDeskIdState extends State<AddDeskId> {
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
               ),
               child: Text(
-                'Yes, Accept Orders',
+                'Qabul qilish',
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,

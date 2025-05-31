@@ -20,7 +20,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  print('✅ Firebase initialized successfully');
+  debugPrint('✅ Firebase initialized successfully');
 
   // Initialize Hive
   final appDocumentDirectory = await getApplicationDocumentsDirectory();
@@ -29,7 +29,7 @@ void main() async {
 
   // Initialize dependency injection
   await initializeDependencies();
-  print('✅ Dependencies initialized successfully');
+  debugPrint('✅ Dependencies initialized successfully');
 
   runApp(const MyApp());
   // runApp(

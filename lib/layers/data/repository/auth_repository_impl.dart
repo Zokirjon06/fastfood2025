@@ -24,15 +24,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  @override
-  Future<Either<String, void>> signOut() async {
-    try {
-      await _authService.signOut();
-      return const Right(null);
-    } catch (e) {
-      return Left(e.toString());
-    }
-  }
+
 
   @override
   Future<Either<String, UserEntity?>> getCurrentUser() async {

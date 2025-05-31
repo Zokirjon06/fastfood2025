@@ -1,11 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fastfood/layers/application/cubit/auth_cubit.dart';
 import 'package:fastfood/layers/domain/entity/order_entity.dart';
 import 'package:fastfood/layers/presentation/extension/extensions.dart';
 import 'package:fastfood/layers/presentation/pages/splash_page.dart';
 import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:gap/gap.dart';
@@ -46,7 +44,7 @@ class _OrderListPageState extends State<OrderListPage> {
               ),
               Gap(12.w),
               Text(
-                'Order Ready?',
+                'Buyurtma tayyormi?',
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
@@ -87,7 +85,7 @@ class _OrderListPageState extends State<OrderListPage> {
               ),
               Gap(16.h),
               Text(
-                'Are you sure?',
+                'Ishonchingiz komilmi?',
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
@@ -96,7 +94,7 @@ class _OrderListPageState extends State<OrderListPage> {
               ),
               Gap(8.h),
               Text(
-                'Is this order ready?',
+                'Bu buyurtma tayyormi?',
                 style: TextStyle(
                   fontSize: 16.sp,
                   color: Colors.grey.shade700,
@@ -108,7 +106,7 @@ class _OrderListPageState extends State<OrderListPage> {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: Text(
-                'Cancel',
+                'Bekor qilish',
                 style: TextStyle(
                   fontSize: 16.sp,
                   color: Colors.grey.shade600,
@@ -127,7 +125,7 @@ class _OrderListPageState extends State<OrderListPage> {
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
               ),
               child: Text(
-                'Yes, Mark Ready',
+                'Buyurtma tayyor',
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
@@ -160,92 +158,7 @@ class _OrderListPageState extends State<OrderListPage> {
     }
   }
 
-  /// Shows a confirmation dialog before logging out
-  Future<void> _showLogoutConfirmation() async {
-    final bool? shouldLogout = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.logout,
-                color: Colors.amber.shade700,
-                size: 28.sp,
-              ),
-              Gap(12.w),
-              Text(
-                'Logout',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            'Are you sure you want to logout?',
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber.shade700,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-              ),
-              child: Text(
-                'Logout',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
 
-    if (shouldLogout == true) {
-      _performLogout();
-    }
-  }
-
-  /// Performs the actual logout operation
-  void _performLogout() {
-    try {
-      context.read<AuthCubit>().logout();
-      // Show success message
-      ShowSnackBar.show(context, 'Logged out successfully');
-    } catch (e) {
-      // Show error message if logout fails
-      ShowSnackBar.show(context, 'Failed to logout. Please try again.');
-    }
-  }
 
   /// Builds a single order item widget with improved styling
   Widget _buildOrderItem(OrderItem item) {
@@ -335,26 +248,6 @@ class _OrderListPageState extends State<OrderListPage> {
         ),
         backgroundColor: Colors.white,
         centerTitle: true,
-        actions: [
-          // Logout Button
-          BlocListener<AuthCubit, AuthState>(
-            listener: (context, state) {
-              if (state.status == AuthStatus.error && state.errorMessage != null) {
-                ShowSnackBar.show(context, state.errorMessage!);
-              }
-            },
-            child: IconButton(
-              onPressed: _showLogoutConfirmation,
-              icon: Icon(
-                Icons.logout,
-                size: 28.sp,
-                color: Colors.amber.shade700,
-              ),
-              tooltip: 'Logout',
-            ),
-          ),
-          Gap(12.w),
-        ],
       ),
       body: StreamBuilder<List<OrderEntity>>(
         stream: getAllOrdersStream(),
@@ -454,19 +347,8 @@ class _OrderListPageState extends State<OrderListPage> {
                       Gap(12.h),
 
                       // Items list with better layout
-                      Container(
-                        // constraints: BoxConstraints(
-                        //   maxHeight: items.length > 4 ? 200.h : double.infinity,
-                        // ),
-                        child:
-                           Column(
-                                children: items.map((item) => _buildOrderItem(item)).toList(),
-                              )
-                            // : ListView.builder(
-                            //     shrinkWrap: true,
-                            //     itemCount: items.length,
-                            //     itemBuilder: (context, index) => _buildOrderItem(items[index]),
-                            //   ),
+                      Column(
+                        children: items.map((item) => _buildOrderItem(item)).toList(),
                       ),
                       Divider(height: 20.h, color: Colors.grey),
                       Row(

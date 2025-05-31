@@ -1,10 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class OrderEntity {
   String id;
   final String userId;
   final List<OrderItem> items;
-  final bool status; 
+  final bool status;
   DateTime date;
 
 

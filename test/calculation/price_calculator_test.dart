@@ -7,18 +7,16 @@ ProductEntity createTestProduct({
   required String id,
   required String name,
   required double price,
-  String category = 'Food',
-  String imageUrl = '',
-  bool isAvailable = true,
+  String? localImagePath = '/test/image/path.jpg',
+  String? uploadedImageUrl,
 }) {
   return ProductEntity(
     id: id,
     name: name,
     price: price,
-    imageUrl: imageUrl,
-    category: category,
+    localImagePath: localImagePath,
+    uploadedImageUrl: uploadedImageUrl,
     date: DateTime.now(),
-    isAvailable: isAvailable,
   );
 }
 

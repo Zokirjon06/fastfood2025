@@ -24,13 +24,7 @@ class AuthService {
     }
   }
 
-  Future<void> signOut() async {
-    try {
-      await _firebaseAuth.signOut();
-    } catch (e) {
-      throw Exception('Failed to sign out: ${e.toString()}');
-    }
-  }
+
 
   Future<UserEntity?> getCurrentUser() async {
     try {

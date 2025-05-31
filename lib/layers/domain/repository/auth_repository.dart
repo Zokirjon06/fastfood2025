@@ -7,8 +7,6 @@ abstract class AuthRepository {
     required String password,
   });
 
-  Future<Either<String, void>> signOut();
-
   Future<Either<String, UserEntity?>> getCurrentUser();
 
   Stream<UserEntity?> get authStateChanges;
