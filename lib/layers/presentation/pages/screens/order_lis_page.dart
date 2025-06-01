@@ -16,6 +16,49 @@ class OrderListPage extends StatefulWidget {
 }
 
 class _OrderListPageState extends State<OrderListPage> {
+
+  //
+  //  Set<int> takenDeskIds = {};
+   Set<int> deskId = {};
+   Set<int> orderId = {};
+
+  //
+  @override
+  void initState() {
+    super.initState();
+    fetchTakenDeskIds();
+  }
+
+  //
+   Future<void> fetchTakenDeskIds() async {
+  final firestore = FirebaseFirestore.instance;
+
+  final deskSnapshot = await firestore.collection('deskId').get();
+  final orderSnapshot = await firestore.collection('orders').get();
+
+  final deskIds = deskSnapshot.docs
+      .map((doc) => int.tryParse(doc.data()['id'] ?? '') ?? -1)
+      .where((id) => id != -1)
+      .toSet();
+
+  final orderIds = orderSnapshot.docs
+      .map((doc) => int.tryParse(doc.data()['userId'] ?? '') ?? -1)
+      .where((id) => id != -1)
+      .toSet();
+
+  final bool hasCommonIds = deskIds.intersection(orderIds).isNotEmpty;
+
+  setState(() {
+    deskId = deskIds;
+    orderId = orderIds;
+    // Istasangiz bu yerda `hasCommonIds` ni saqlash uchun boshqa o'zgaruvchiga ham o'rnating
+  });
+
+  print("Common ID bor: $hasCommonIds");
+}
+
+
+  //
   Stream<List<OrderEntity>> getAllOrdersStream() {
     final db = FirebaseFirestore.instance;
     return db.collection('orders').snapshots().map((snapshot) {
@@ -24,6 +67,8 @@ class _OrderListPageState extends State<OrderListPage> {
           .toList();
     });
   }
+
+  
 
   /// Shows order ready confirmation dialog
   Future<void> _showOrderReadyConfirmation(OrderEntity order) async {
@@ -160,6 +205,8 @@ class _OrderListPageState extends State<OrderListPage> {
 
 
 
+
+
   /// Builds a single order item widget with improved styling
   Widget _buildOrderItem(OrderItem item) {
     return Container(
@@ -282,9 +329,14 @@ class _OrderListPageState extends State<OrderListPage> {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
-              final userId = order.userId;
+              // final userId = order.userId;
               final status = order.status;
               final items = order.items;
+              // final deskNumber = index + 1;
+              // final isTaken = deskId == orderId;
+              final userId = int.tryParse(order.userId.toString()) ?? -1;
+              final isTaken = deskId.contains(userId);
+
 
               double total = 0;
               for (var item in items) {
@@ -318,7 +370,7 @@ class _OrderListPageState extends State<OrderListPage> {
                             ),
                             Gap(8.w),
                             Text(
-                              'Stol raqami: $userId',
+                              isTaken ? 'Stol raqami: $userId' : 'Dostavka: $userId',
                               style: TextStyle(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.bold,

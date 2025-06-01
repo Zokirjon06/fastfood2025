@@ -7,6 +7,7 @@ import 'package:fastfood/layers/domain/entity/product_entity.dart';
 import 'package:fastfood/layers/presentation/extension/extensions.dart';
 import 'package:fastfood/layers/presentation/pages/screens/add_desk_id.dart';
 import 'package:fastfood/layers/presentation/pages/splash_page.dart';
+import 'package:fastfood/layers/presentation/pages/order_edit_or_delete_page.dart';
 import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
 import 'package:fastfood/layers/data/service/image_upload_service.dart';
 import 'package:flutter/material.dart';
@@ -587,6 +588,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   send = selectedProducts.isNotEmpty;
                 });
               },
+              onLongPress: () async {
+                final result = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => OrderEditOrDeletePage(product: product),
+                  ),
+                );
+
+                // If changes were made, refresh the products list
+                if (result == true && mounted && context.mounted) {
+                  context.read<ProductCubit>().getProducts('');
+                }
+              },
               child: Container(
                 padding: EdgeInsets.only(bottom: 20.h),
                 decoration: BoxDecoration(
@@ -927,10 +940,16 @@ class _AddProductModalState extends State<AddProductModal> {
     try {
       final db = FirebaseFirestore.instance;
 
-      // Upload image to Firebase Storage
-      final uploadedImageUrl = await ImageUploadService.uploadProductImage(
+      // Show upload progress
+      if (mounted) {
+        ShowSnackBar.show(context, "Rasm saqlanmoqda...");
+      }
+
+      // Upload image to Firebase Storage with retry mechanism
+      final uploadedImageUrl = await ImageUploadService.uploadProductImageWithRetry(
         imageFile: _selectedImage!,
         fileName: 'product_${name.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}',
+        maxRetries: 3,
       );
 
       ProductEntity product = ProductEntity(
@@ -956,7 +975,24 @@ class _AddProductModalState extends State<AddProductModal> {
     } catch (e) {
       debugPrint('Error submitting product: $e');
       if (mounted) {
-        ShowSnackBar.show(context, "Xato: ${e.toString()}");
+        String errorMessage = "Mahsulot qo'shishda xatolik yuz berdi";
+
+        // Provide specific error messages
+        if (e.toString().contains('Storage bucket not found')) {
+          errorMessage = "Firebase Storage sozlanmagan. Mahsulot mahalliy saqlanadi.";
+        } else if (e.toString().contains('Unauthorized access')) {
+          errorMessage = "Rasm yuklash uchun ruxsat yo'q. Mahsulot mahalliy saqlanadi.";
+        } else if (e.toString().contains('User not authenticated')) {
+          errorMessage = "Foydalanuvchi autentifikatsiya qilinmagan. Qayta login qiling.";
+        } else if (e.toString().contains('File size too large')) {
+          errorMessage = "Fayl hajmi juda katta. Maksimal 10MB ruxsat etilgan.";
+        } else if (e.toString().contains('Both Firebase Storage and local storage failed')) {
+          errorMessage = "Rasm saqlashda xatolik. Qaytadan urinib ko'ring.";
+        } else if (e.toString().contains('Firebase Storage') && e.toString().contains('local storage')) {
+          errorMessage = "Mahsulot muvaffaqiyatli qo'shildi (mahalliy saqlandi).";
+        }
+
+        ShowSnackBar.show(context, errorMessage);
       }
     } finally {
       if (mounted) {

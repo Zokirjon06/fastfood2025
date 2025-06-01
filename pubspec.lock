@@ -97,6 +97,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.6"
+  currency_text_input_formatter:
+    dependency: "direct main"
+    description:
+      name: currency_text_input_formatter
+      sha256: "7ca90006337241559caea445699b4b32f4e198676728541604fa9521d0d4f75a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.0"
   dartz:
     dependency: "direct main"
     description:
@@ -432,6 +440,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.1.1"
+  mask_text_input_formatter:
+    dependency: "direct main"
+    description:
+      name: mask_text_input_formatter
+      sha256: "978c58ec721c25621ceb468e633f4eef64b64d45424ac4540e0565d4f7c800cd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.9.0"
   matcher:
     dependency: transitive
     description:
@@ -473,7 +489,7 @@ packages:
     source: hosted
     version: "1.0.0"
   path:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path
       sha256: "087ce49c3f0dc39180befefc60fdb4acd8f8620e5682fe2476afd0b3688bb4af"
