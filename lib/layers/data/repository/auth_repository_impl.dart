@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:fastfood/layers/data/service/auth_service.dart';
 import 'package:fastfood/layers/domain/entity/user_entity.dart';
 import 'package:fastfood/layers/domain/repository/auth_repository.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthService _authService;
@@ -9,33 +11,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._authService);
 
   @override
-  Future<Either<String, UserEntity>> signInWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final user = await _authService.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return Right(user);
-    } catch (e) {
-      return Left(e.toString());
-    }
+  Future<bool> login(UserEntity login) async{
+    return _authService.login(login);
   }
-
-
-
-  @override
-  Future<Either<String, UserEntity?>> getCurrentUser() async {
-    try {
-      final user = await _authService.getCurrentUser();
-      return Right(user);
-    } catch (e) {
-      return Left(e.toString());
-    }
-  }
-
-  @override
-  Stream<UserEntity?> get authStateChanges => _authService.authStateChanges;
 }

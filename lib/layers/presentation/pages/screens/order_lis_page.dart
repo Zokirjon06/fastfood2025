@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fastfood/layers/domain/entity/order_entity.dart';
 import 'package:fastfood/layers/presentation/extension/extensions.dart';
+import 'package:fastfood/layers/presentation/pages/auth/login_page.dart';
 import 'package:fastfood/layers/presentation/pages/splash_page.dart';
 import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -16,11 +18,10 @@ class OrderListPage extends StatefulWidget {
 }
 
 class _OrderListPageState extends State<OrderListPage> {
-
   //
   //  Set<int> takenDeskIds = {};
-   Set<int> deskId = {};
-   Set<int> orderId = {};
+  Set<int> deskId = {};
+  Set<int> orderId = {};
 
   //
   @override
@@ -30,33 +31,32 @@ class _OrderListPageState extends State<OrderListPage> {
   }
 
   //
-   Future<void> fetchTakenDeskIds() async {
-  final firestore = FirebaseFirestore.instance;
+  Future<void> fetchTakenDeskIds() async {
+    final firestore = FirebaseFirestore.instance;
 
-  final deskSnapshot = await firestore.collection('deskId').get();
-  final orderSnapshot = await firestore.collection('orders').get();
+    final deskSnapshot = await firestore.collection('deskId').get();
+    final orderSnapshot = await firestore.collection('orders').get();
 
-  final deskIds = deskSnapshot.docs
-      .map((doc) => int.tryParse(doc.data()['id'] ?? '') ?? -1)
-      .where((id) => id != -1)
-      .toSet();
+    final deskIds = deskSnapshot.docs
+        .map((doc) => int.tryParse(doc.data()['id'] ?? '') ?? -1)
+        .where((id) => id != -1)
+        .toSet();
 
-  final orderIds = orderSnapshot.docs
-      .map((doc) => int.tryParse(doc.data()['userId'] ?? '') ?? -1)
-      .where((id) => id != -1)
-      .toSet();
+    final orderIds = orderSnapshot.docs
+        .map((doc) => int.tryParse(doc.data()['userId'] ?? '') ?? -1)
+        .where((id) => id != -1)
+        .toSet();
 
-  final bool hasCommonIds = deskIds.intersection(orderIds).isNotEmpty;
+    final bool hasCommonIds = deskIds.intersection(orderIds).isNotEmpty;
 
-  setState(() {
-    deskId = deskIds;
-    orderId = orderIds;
-    // Istasangiz bu yerda `hasCommonIds` ni saqlash uchun boshqa o'zgaruvchiga ham o'rnating
-  });
+    setState(() {
+      deskId = deskIds;
+      orderId = orderIds;
+      // Istasangiz bu yerda `hasCommonIds` ni saqlash uchun boshqa o'zgaruvchiga ham o'rnating
+    });
 
-  print("Common ID bor: $hasCommonIds");
-}
-
+    print("Common ID bor: $hasCommonIds");
+  }
 
   //
   Stream<List<OrderEntity>> getAllOrdersStream() {
@@ -67,8 +67,6 @@ class _OrderListPageState extends State<OrderListPage> {
           .toList();
     });
   }
-
-  
 
   /// Shows order ready confirmation dialog
   Future<void> _showOrderReadyConfirmation(OrderEntity order) async {
@@ -203,10 +201,6 @@ class _OrderListPageState extends State<OrderListPage> {
     }
   }
 
-
-
-
-
   /// Builds a single order item widget with improved styling
   Widget _buildOrderItem(OrderItem item) {
     return Container(
@@ -293,6 +287,17 @@ class _OrderListPageState extends State<OrderListPage> {
             color: Colors.black87,
           ),
         ),
+        actions: [
+          IconButton(
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),(route) => false
+                );
+              },
+              icon: Icon(Icons.logout_outlined))
+        ],
         backgroundColor: Colors.white,
         centerTitle: true,
       ),
@@ -337,7 +342,6 @@ class _OrderListPageState extends State<OrderListPage> {
               final userId = int.tryParse(order.userId.toString()) ?? -1;
               final isTaken = deskId.contains(userId);
 
-
               double total = 0;
               for (var item in items) {
                 total += double.tryParse(item.quantity.toString()) ?? 0;
@@ -355,7 +359,8 @@ class _OrderListPageState extends State<OrderListPage> {
                     children: [
                       // Header with table number and order info
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 12.w, vertical: 8.h),
                         decoration: BoxDecoration(
                           color: Colors.deepPurple.shade50,
                           borderRadius: BorderRadius.circular(8.r),
@@ -370,7 +375,9 @@ class _OrderListPageState extends State<OrderListPage> {
                             ),
                             Gap(8.w),
                             Text(
-                              isTaken ? 'Stol raqami: $userId' : 'Dostavka: $userId',
+                              isTaken
+                                  ? 'Stol raqami: $userId'
+                                  : 'Dostavka: $userId',
                               style: TextStyle(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.bold,
@@ -400,7 +407,8 @@ class _OrderListPageState extends State<OrderListPage> {
 
                       // Items list with better layout
                       Column(
-                        children: items.map((item) => _buildOrderItem(item)).toList(),
+                        children:
+                            items.map((item) => _buildOrderItem(item)).toList(),
                       ),
                       Divider(height: 20.h, color: Colors.grey),
                       Row(
@@ -429,17 +437,23 @@ class _OrderListPageState extends State<OrderListPage> {
                       Container(
                         padding: EdgeInsets.all(10.w),
                         decoration: BoxDecoration(
-                          color: status ? Colors.green.shade50 : Colors.orange.shade50,
+                          color: status
+                              ? Colors.green.shade50
+                              : Colors.orange.shade50,
                           borderRadius: BorderRadius.circular(8.r),
                           border: Border.all(
-                            color: status ? Colors.green.shade200 : Colors.orange.shade200,
+                            color: status
+                                ? Colors.green.shade200
+                                : Colors.orange.shade200,
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               status ? Icons.check_circle : Icons.access_time,
-                              color: status ? Colors.green.shade700 : Colors.orange.shade700,
+                              color: status
+                                  ? Colors.green.shade700
+                                  : Colors.orange.shade700,
                               size: 20.sp,
                             ),
                             Gap(8.w),
@@ -458,20 +472,24 @@ class _OrderListPageState extends State<OrderListPage> {
                                 style: TextStyle(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.bold,
-                                  color: status ? Colors.green.shade700 : Colors.orange.shade700,
+                                  color: status
+                                      ? Colors.green.shade700
+                                      : Colors.orange.shade700,
                                 ),
                               ),
                             ),
                             if (!status)
                               ElevatedButton(
-                                onPressed: () => _showOrderReadyConfirmation(order),
+                                onPressed: () =>
+                                    _showOrderReadyConfirmation(order),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.amber.shade700,
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8.r),
                                   ),
-                                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 16.w, vertical: 8.h),
                                   elevation: 2,
                                 ),
                                 child: Row(
@@ -509,6 +527,4 @@ class _OrderListPageState extends State<OrderListPage> {
       ),
     );
   }
-
-
 }

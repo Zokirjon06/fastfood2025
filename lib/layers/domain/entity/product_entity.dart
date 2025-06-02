@@ -42,7 +42,23 @@ class ProductEntity {
   bool get hasLocalImage => localImagePath != null && localImagePath!.isNotEmpty;
 
   /// Helper method to check if this product has an uploaded image URL
-  bool get hasUploadedImage => imageUrl != null && imageUrl!.isNotEmpty;
+  bool get hasUploadedImage {
+    if (imageUrl == null || imageUrl!.isEmpty) return false;
+    // Check if it's a valid URL (starts with http/https) and not a local file path
+    return imageUrl!.startsWith('http') && !imageUrl!.contains('/data/user/');
+  }
+
+  /// Helper method to get the actual local image path (from localImagePath or imageUrl if it's a local path)
+  String? get actualLocalImagePath {
+    if (hasLocalImage) return localImagePath;
+    if (imageUrl != null && imageUrl!.isNotEmpty && !imageUrl!.startsWith('http')) {
+      return imageUrl; // imageUrl contains a local path (legacy data)
+    }
+    return null;
+  }
+
+  /// Helper method to check if this product has a local image (including legacy data in imageUrl)
+  bool get hasActualLocalImage => actualLocalImagePath != null;
 
   /// Helper method to check if product has any image (local or uploaded)
   bool get hasImage => hasLocalImage || hasUploadedImage;

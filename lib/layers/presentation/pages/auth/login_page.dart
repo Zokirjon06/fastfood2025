@@ -1,3 +1,7 @@
+import 'package:fastfood/layers/domain/entity/user_entity.dart';
+import 'package:fastfood/layers/presentation/pages/home_page.dart';
+import 'package:fastfood/layers/presentation/pages/splash_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,7 +9,6 @@ import 'package:gap/gap.dart';
 import 'package:fastfood/layers/application/cubit/auth_cubit.dart';
 import 'package:fastfood/layers/presentation/widgets/custom_text_field.dart';
 import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
-
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,6 +21,8 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final User? user = FirebaseAuth.instance.currentUser;
 
   @override
   void dispose() {
@@ -48,13 +53,10 @@ class _LoginPageState extends State<LoginPage> {
 
   void _login() {
     if (_formKey.currentState!.validate()) {
-      // Clear any previous errors before attempting login
-      context.read<AuthCubit>().clearError();
-
-      context.read<AuthCubit>().login(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
+      setState(() {
+        context.read<AuthCubit>().login(
+            UserEntity(_emailController.text.trim(), _passwordController.text));
+      });
     }
   }
 
@@ -62,22 +64,34 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
-        // Only handle error display here - navigation is handled by main app routing
-        if (state.status == AuthStatus.error && state.errorMessage != null) {
-          ShowSnackBar.show(context, state.errorMessage!);
+        // Simple error handling for restaurant project
+        if (state.status == AuthStatus.error) {
+          return ShowSnackBar.show(context, state.errorMessage!);
         }
-        // if (state.status == AuthStatus.authenticated) {
-        //   Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => HomePage()), (route) => false);
-        // }
+        if (state.status == AuthStatus.success) {
+          Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => SplashPage()),
+              (route) => false);
+        }
+        // Note: Navigation is handled by main app routing, not here
       },
       child: Scaffold(
         floatingActionButton: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
             return FloatingActionButton(
-              onPressed: state.isLoading ? null : _login, // Disable when loading
+              onPressed: () {
+                if (state.status == AuthStatus.error) {
+                  debugPrint('xato${AuthStatus.error}');
+                }
+                
+                _login();
+              }, // Disable when loading
               shape: const CircleBorder(),
-              backgroundColor: state.isLoading ? Colors.grey : Colors.amber,
-              child: state.isLoading
+              backgroundColor: state.status == AuthStatus.loading
+                  ? Colors.grey
+                  : Colors.amber,
+              child: state.status == AuthStatus.loading
                   ? const CircularProgressIndicator(
                       color: Colors.white,
                       strokeWidth: 2,

@@ -7,13 +7,7 @@ class LoginUseCase {
 
   LoginUseCase(this._authRepository);
 
-  Future<Either<String, UserEntity>> call({
-    required String email,
-    required String password,
-  }) async {
-    return await _authRepository.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+  Future<bool>call(UserEntity login) async {
+    return await _authRepository.login(login);
   }
 }

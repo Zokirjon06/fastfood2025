@@ -6,6 +6,8 @@ import 'package:fastfood/layers/presentation/pages/auth/login_page.dart';
 import 'package:fastfood/layers/presentation/pages/home_page.dart';
 import 'package:fastfood/layers/presentation/pages/screens/order_lis_page.dart';
 import 'package:fastfood/layers/presentation/pages/splash_page.dart';
+import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -113,6 +115,8 @@ class _FastFoodAppState extends State<FastFoodApp> {
   // Cached instances for better performance
   late final Box _authBox;
   static const String _initialQuery = '';
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final User? user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
@@ -123,7 +127,14 @@ class _FastFoodAppState extends State<FastFoodApp> {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: _buildBlocProviders(),
+      providers: [
+        BlocProvider<ProductCubit>(
+          create: (_) => sl<ProductCubit>()..getProducts(_initialQuery),
+        ),
+        BlocProvider<AuthCubit>(
+          create: (_) => sl<AuthCubit>(),
+        ),
+      ],
       child: ScreenUtilInit(
         designSize: const Size(430, 932),
         minTextAdapt: true,
@@ -132,22 +143,15 @@ class _FastFoodAppState extends State<FastFoodApp> {
           debugShowCheckedModeBanner: false,
           title: 'FastFood Admin',
           theme: _buildAppTheme(),
-          home: _buildHomeWidget(),
+          home: user != null ? _getAuthenticatedPage() : LoginPage(),
+          // home: BlocBuilder<AuthCubit, AuthState>(
+          //   builder: (context, authState) {
+          //     return user != null ? _getAuthenticatedPage() : LoginPage();
+          //   },
+          // ),
         ),
       ),
     );
-  }
-
-  /// Creates optimized BLoC providers
-  List<BlocProvider> _buildBlocProviders() {
-    return [
-      BlocProvider<ProductCubit>(
-        create: (_) => sl<ProductCubit>()..getProducts(_initialQuery),
-      ),
-      BlocProvider<AuthCubit>(
-        create: (_) => sl<AuthCubit>(),
-      ),
-    ];
   }
 
   /// Builds the app theme with consistent styling
@@ -174,30 +178,37 @@ class _FastFoodAppState extends State<FastFoodApp> {
     );
   }
 
-  /// Builds the home widget based on authentication state
-  Widget _buildHomeWidget() {
-    return BlocBuilder<AuthCubit, AuthState>(
-      builder: (context, authState) {
-        return _getPageForAuthState(authState);
-      },
-    );
-  }
+  // /// Builds the home widget based on authentication state
+  // Widget _buildHomeWidget() {
+  //   return BlocBuilder<AuthCubit, AuthState>(
+  //     builder: (context, authState) {
+  //       return _getPageForAuthState(authState);
+  //     },
+  //   );
+  // }
+
+  // Widget _aut(){
+
+  // if (user != null) {
+  //   return _getAuthenticatedPage();
+  // }
+  // }
 
   /// Returns the appropriate page based on authentication state
-  Widget _getPageForAuthState(AuthState authState) {
-    switch (authState.status) {
-      case AuthStatus.authenticated:
-        return _getAuthenticatedPage();
+  // Widget _getPageForAuthState(AuthState authState) {
+  //   switch (authState.status) {
+  //     case AuthStatus.authenticated:
+  //       return _getAuthenticatedPage();
 
-      case AuthStatus.unauthenticated:
-      case AuthStatus.error:
-        return const LoginPage();
+  //     case AuthStatus.unauthenticated:
+  //     case AuthStatus.error:
+  //       return const LoginPage();
 
-      case AuthStatus.initial:
-      case AuthStatus.loading:
-        return const SplashPage();
-    }
-  }
+  //     case AuthStatus.initial:
+  //     case AuthStatus.loading:
+  //       return const SplashPage();
+  //   }
+  // }
 
   /// Returns the appropriate page for authenticated users
   Widget _getAuthenticatedPage() {

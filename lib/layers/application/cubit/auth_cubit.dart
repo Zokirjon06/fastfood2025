@@ -8,72 +8,34 @@ import 'package:fastfood/layers/domain/repository/auth_repository.dart';
 part 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final LoginUseCase _loginUseCase;
-  final AuthRepository _authRepository;
-  late StreamSubscription<UserEntity?> _authStateSubscription;
-
-  AuthCubit({
+   AuthCubit({
     required LoginUseCase loginUseCase,
     required AuthRepository authRepository,
   })  : _loginUseCase = loginUseCase,
-        _authRepository = authRepository,
-        super(const AuthState()) {
-    _initializeAuthState();
-  }
+        super(const AuthState());
 
-  void _initializeAuthState() {
-    _authStateSubscription = _authRepository.authStateChanges.listen(
-      (user) {
-        if (user != null) {
-          emit(state.copyWith(
-            status: AuthStatus.authenticated,
-            user: user,
-            isLoading: false,
-          ));
-        } else {
-          emit(state.copyWith(
-            status: AuthStatus.unauthenticated,
-            user: null,
-            isLoading: false,
-          ));
-        }
-      },
-    );
-  }
+  final LoginUseCase _loginUseCase;
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
-    emit(state.copyWith(
-      status: AuthStatus.loading,
-      isLoading: true,
-      errorMessage: null,
-    ));
+ 
+  Future<void> login(UserEntity login) async {
+    try {
+      emit(state.copyWith(status: AuthStatus.loading));
 
-    final result = await _loginUseCase(email: email, password: password);
+      final result = await _loginUseCase(login);
 
-    result.fold(
-      (error) => emit(state.copyWith(
+      if (result) {
+        emit(state.copyWith(status: AuthStatus.success));
+      } else {
+        emit(state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: 'Qaytadan urinib ko\'ring', // "try again"
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
         status: AuthStatus.error,
-        errorMessage: error,
-        isLoading: false,
-      )),
-      (user) => emit(state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-        isLoading: false,
-      )),
-    );
-  }
-
-  void clearError() {
-    emit(state.clearError());
-  }
-
-  @override
-  Future<void> close() {
-    _authStateSubscription.cancel();
-    return super.close();
+        errorMessage: 'Qaytadan urinib ko\'ring', // "try again"
+      ));
+    }
   }
 }

@@ -161,8 +161,8 @@ class _OrderEditOrDeletePageState extends State<OrderEditOrDeletePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Ishonchingiz komilmi?"),
-          content: const Text("Bu mahsulotni o'chirmoqchimisiz?"),
+          title: const Text("Ishonchingiz komilmi"),
+          content: const Text("Bu maxsulotni o'chirmoqchimisiz?"),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -298,7 +298,7 @@ class _OrderEditOrDeletePageState extends State<OrderEditOrDeletePage> {
             ),
             SizedBox(height: 8.h),
             TextField(
-              controller: _priceController,
+              controller: _priceController  ,
               keyboardType: TextInputType.number,
               inputFormatters: [InputFormatters.moneyFormatter],
               decoration: InputDecoration(
@@ -318,10 +318,8 @@ class _OrderEditOrDeletePageState extends State<OrderEditOrDeletePage> {
       floatingActionButton: _isLoading
           ? const CircularProgressIndicator()
           : FloatingActionButton(
-            shape: CircleBorder(),
-            backgroundColor: Colors.amber,
               onPressed: _saveChanges,
-              child: const Icon(Icons.check,color: Colors.white,),
+              child: const Icon(Icons.check),
             ),
     );
   }

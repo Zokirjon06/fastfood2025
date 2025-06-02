@@ -561,6 +561,51 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  /// Builds a safe product image widget that handles both local and network images
+  Widget _buildProductImage(ProductEntity product) {
+    // First, try to display local image if available
+    if (product.hasActualLocalImage) {
+      return Image.file(
+        File(product.actualLocalImagePath!),
+        height: 130.h,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildFallbackImage();
+        },
+      );
+    }
+
+    // Then, try to display network image if it's a valid URL
+    if (product.hasUploadedImage) {
+      return Image.network(
+        product.imageUrl!,
+        height: 130.h,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildFallbackImage();
+        },
+      );
+    }
+
+    // If no valid image, show placeholder
+    return _buildFallbackImage();
+  }
+
+  /// Builds a fallback image widget when no image is available
+  Widget _buildFallbackImage() {
+    return Container(
+      height: 130.h,
+      width: double.infinity,
+      color: Colors.grey.shade300,
+      child: const Icon(
+        Icons.image_not_supported,
+        size: 50,
+      ),
+    );
+  }
+
   /// Builds the product grid for a specific page
   Widget _buildProductGrid(List<ProductEntity> products) {
     return MasonryGridView.count(
@@ -623,69 +668,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ClipRRect(
                       borderRadius: BorderRadius.vertical(
                           top: Radius.circular(15.r)),
-                      child: product.hasLocalImage
-                          ? Image.file(
-                              File(product.localImagePath!),
-                              height: 130.h,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return product.hasUploadedImage
-                                    ? Image.network(
-                                        product.imageUrl!,
-                                        height: 130.h,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            height: 130.h,
-                                            width: double.infinity,
-                                            color: Colors.grey.shade300,
-                                            child: const Icon(
-                                              Icons.image_not_supported,
-                                              size: 50,
-                                            ),
-                                          );
-                                        },
-                                      )
-                                    : Container(
-                                        height: 130.h,
-                                        width: double.infinity,
-                                        color: Colors.grey.shade300,
-                                        child: const Icon(
-                                          Icons.image_not_supported,
-                                          size: 50,
-                                        ),
-                                      );
-                              },
-                            )
-                          : product.hasUploadedImage
-                              ? Image.network(
-                                  product.imageUrl!,
-                                  height: 130.h,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      height: 130.h,
-                                      width: double.infinity,
-                                      color: Colors.grey.shade300,
-                                      child: const Icon(
-                                        Icons.image_not_supported,
-                                        size: 50,
-                                      ),
-                                    );
-                                  },
-                                )
-                              : Container(
-                                  height: 130.h,
-                                  width: double.infinity,
-                                  color: Colors.grey.shade300,
-                                  child: const Icon(
-                                    Icons.image_not_supported,
-                                    size: 50,
-                                  ),
-                                ),
+                      child: _buildProductImage(product),
                     ),
                     Padding(
                       padding: EdgeInsets.all(10.w),
@@ -952,11 +935,23 @@ class _AddProductModalState extends State<AddProductModal> {
         maxRetries: 3,
       );
 
+      // Check if uploadedImageUrl is a local path or URL
+      String? imageUrl;
+      String? localImagePath;
+
+      if (uploadedImageUrl.startsWith('http')) {
+        imageUrl = uploadedImageUrl;
+        localImagePath = null;
+      } else {
+        localImagePath = uploadedImageUrl;
+        imageUrl = null;
+      }
+
       ProductEntity product = ProductEntity(
         name: name,
         date: DateTime.now(),
-        localImagePath: _selectedImage!.path,
-        imageUrl: uploadedImageUrl,
+        localImagePath: localImagePath,
+        imageUrl: imageUrl,
         price: price,
       );
 
