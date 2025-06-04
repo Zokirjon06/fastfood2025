@@ -1,3 +1,4 @@
+import 'package:device_preview/device_preview.dart';
 import 'package:fastfood/di/di.dart';
 import 'package:fastfood/firebase_options.dart';
 import 'package:fastfood/layers/application/cubit/auth_cubit.dart';
@@ -9,12 +10,13 @@ import 'package:fastfood/layers/presentation/pages/splash_page.dart';
 import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+
 
 /// Main entry point of the FastFood application
 /// Initializes all required services and dependencies
@@ -33,6 +35,12 @@ void main() async {
 
     // Run the application
     runApp(const FastFoodApp());
+  //    runApp(
+  //   DevicePreview(
+  //     enabled: !kReleaseMode,
+  //     builder: (context) => const FastFoodApp(), // Wrap your app
+  //   ),
+  // );
   } catch (error, stackTrace) {
     // Log initialization errors
     debugPrint('❌ App initialization failed: $error');
@@ -115,7 +123,6 @@ class _FastFoodAppState extends State<FastFoodApp> {
   // Cached instances for better performance
   late final Box _authBox;
   static const String _initialQuery = '';
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final User? user = FirebaseAuth.instance.currentUser;
 
   @override
@@ -135,21 +142,16 @@ class _FastFoodAppState extends State<FastFoodApp> {
           create: (_) => sl<AuthCubit>(),
         ),
       ],
-      child: ScreenUtilInit(
-        designSize: const Size(430, 932),
-        minTextAdapt: true,
-        splitScreenMode: true,
-        builder: (context, child) => MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'FastFood Admin',
-          theme: _buildAppTheme(),
-          home: user != null ? _getAuthenticatedPage() : LoginPage(),
-          // home: BlocBuilder<AuthCubit, AuthState>(
-          //   builder: (context, authState) {
-          //     return user != null ? _getAuthenticatedPage() : LoginPage();
-          //   },
-          // ),
-        ),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'FastFood Admin',
+        theme: _buildAppTheme(),
+        home: user != null ? _getAuthenticatedPage() : LoginPage(),
+        // home: BlocBuilder<AuthCubit, AuthState>(
+        //   builder: (context, authState) {
+        //     return user != null ? _getAuthenticatedPage() : LoginPage();
+        //   },
+        // ),
       ),
     );
   }
@@ -178,37 +180,6 @@ class _FastFoodAppState extends State<FastFoodApp> {
     );
   }
 
-  // /// Builds the home widget based on authentication state
-  // Widget _buildHomeWidget() {
-  //   return BlocBuilder<AuthCubit, AuthState>(
-  //     builder: (context, authState) {
-  //       return _getPageForAuthState(authState);
-  //     },
-  //   );
-  // }
-
-  // Widget _aut(){
-
-  // if (user != null) {
-  //   return _getAuthenticatedPage();
-  // }
-  // }
-
-  /// Returns the appropriate page based on authentication state
-  // Widget _getPageForAuthState(AuthState authState) {
-  //   switch (authState.status) {
-  //     case AuthStatus.authenticated:
-  //       return _getAuthenticatedPage();
-
-  //     case AuthStatus.unauthenticated:
-  //     case AuthStatus.error:
-  //       return const LoginPage();
-
-  //     case AuthStatus.initial:
-  //     case AuthStatus.loading:
-  //       return const SplashPage();
-  //   }
-  // }
 
   /// Returns the appropriate page for authenticated users
   Widget _getAuthenticatedPage() {

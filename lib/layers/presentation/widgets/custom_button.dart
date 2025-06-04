@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fastfood/layers/presentation/utils/responsive_utils.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -31,7 +31,7 @@ class CustomButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: width ?? double.infinity,
-      height: height ?? 55.h,
+      height: height ?? context.rSpacing(55),
       child: ElevatedButton(
         onPressed: enabled && !isLoading ? onPressed : null,
         style: ElevatedButton.styleFrom(
@@ -40,14 +40,14 @@ class CustomButton extends StatelessWidget {
           disabledBackgroundColor: Colors.grey.shade300,
           disabledForegroundColor: Colors.grey.shade600,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
+            borderRadius: BorderRadius.circular(borderRadius ?? context.rBorderRadius(12)),
           ),
           elevation: 2,
         ),
         child: isLoading
             ? SizedBox(
-                width: 24.w,
-                height: 24.h,
+                width: context.rSpacing(24),
+                height: context.rSpacing(24),
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(
@@ -61,12 +61,12 @@ class CustomButton extends StatelessWidget {
                 children: [
                   if (icon != null) ...[
                     icon!,
-                    SizedBox(width: 8.w),
+                    SizedBox(width: context.rSpacing(8)),
                   ],
                   Text(
                     text,
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: context.rFontSize(16),
                       fontWeight: FontWeight.w600,
                     ),
                   ),

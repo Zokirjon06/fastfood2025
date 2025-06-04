@@ -17,7 +17,11 @@ extension NumberToMoney on num? {
     return NumberFormat('#,###').format(this);
   }
 }
-
+extension StringExtension on String {
+  String pickOnlyNumber() {
+    return replaceAll(RegExp(r'[^0-9.]'), '');
+  }
+}
 extension StringToMoney on String {
   String toMoney() {
     return NumberFormat('#,###.00').format(pickOnlyNumber());

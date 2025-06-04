@@ -1,10 +1,10 @@
 import 'package:fastfood/layers/domain/entity/user_entity.dart';
 import 'package:fastfood/layers/presentation/pages/home_page.dart';
 import 'package:fastfood/layers/presentation/pages/splash_page.dart';
+import 'package:fastfood/layers/presentation/utils/responsive_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:fastfood/layers/application/cubit/auth_cubit.dart';
 import 'package:fastfood/layers/presentation/widgets/custom_text_field.dart';
@@ -98,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
                     )
                   : Icon(
                       Icons.login,
-                      size: 30.sp,
+                      size: context.rIconSize(30),
                       color: Colors.white,
                     ),
             );
@@ -106,45 +106,45 @@ class _LoginPageState extends State<LoginPage> {
         ),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: context.rSpacing(24)),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Gap(60.h),
+                  Gap(context.rSpacing(60)),
 
                   // Logo/Header Section
                   Center(
                     child: Column(
                       children: [
                         Container(
-                          width: 100.w,
-                          height: 100.h,
+                          width: context.rSpacing(100),
+                          height: context.rSpacing(100),
                           decoration: BoxDecoration(
                             color: Colors.amber.shade100,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             Icons.fastfood,
-                            size: 50.sp,
+                            size: context.rIconSize(50),
                             color: Colors.amber.shade700,
                           ),
                         ),
-                        Gap(24.h),
+                        Gap(context.rSpacing(24)),
                         Text(
                           'Welcome Back!',
                           style: TextStyle(
-                            fontSize: 28.sp,
+                            fontSize: context.rFontSize(28),
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
                           ),
                         ),
-                        Gap(8.h),
+                        Gap(context.rSpacing(8)),
                         Text(
                           'Sign in to continue to FastFood',
                           style: TextStyle(
-                            fontSize: 16.sp,
+                            fontSize: context.rFontSize(16),
                             color: Colors.grey.shade600,
                           ),
                         ),
@@ -152,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
 
-                  Gap(48.h),
+                  Gap(context.rSpacing(48)),
 
                   // Email Field
                   CustomTextField(
@@ -168,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
 
-                  Gap(20.h),
+                  Gap(context.rSpacing(20)),
 
                   // Password Field
                   CustomTextField(
@@ -184,7 +184,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
 
-                  Gap(40.h),
+                  Gap(context.rSpacing(40)),
                 ],
               ),
             ),

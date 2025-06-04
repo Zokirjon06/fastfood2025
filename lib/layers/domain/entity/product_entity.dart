@@ -1,10 +1,11 @@
 class ProductEntity {
   String id;
-  final String name;
-  final DateTime? date;
-  final String? localImagePath; // For admin: local device image path (required for creation)
-  final String? imageUrl; // Generated after upload to Firebase Storage
-  final double price;
+  String name;
+  DateTime? date;
+  String?
+      localImagePath; // For admin: local device image path (required for creation)
+  String? imageUrl; // Generated after upload to Firebase Storage
+  double price;
 
   ProductEntity({
     this.id = '',
@@ -27,19 +28,20 @@ class ProductEntity {
   }
 
   Map<String, dynamic> toJson() => {
-    'name': name,
-    'date': date?.toIso8601String(),
-    if (localImagePath != null) 'localImagePath': localImagePath,
-    if (imageUrl != null) 'imageUrl': imageUrl,
-    'price': price,
-  };
+        'name': name,
+        'date': date?.toIso8601String(),
+        if (localImagePath != null) 'localImagePath': localImagePath,
+        if (imageUrl != null) 'imageUrl': imageUrl,
+        'price': price,
+      };
 
   /// Helper method to get the appropriate image source for display
   /// Returns local path if available (for admin preview), otherwise returns uploaded URL
   String? get displayImageSource => localImagePath ?? imageUrl;
 
   /// Helper method to check if this product has a local image (admin mode)
-  bool get hasLocalImage => localImagePath != null && localImagePath!.isNotEmpty;
+  bool get hasLocalImage =>
+      localImagePath != null && localImagePath!.isNotEmpty;
 
   /// Helper method to check if this product has an uploaded image URL
   bool get hasUploadedImage {
@@ -51,7 +53,9 @@ class ProductEntity {
   /// Helper method to get the actual local image path (from localImagePath or imageUrl if it's a local path)
   String? get actualLocalImagePath {
     if (hasLocalImage) return localImagePath;
-    if (imageUrl != null && imageUrl!.isNotEmpty && !imageUrl!.startsWith('http')) {
+    if (imageUrl != null &&
+        imageUrl!.isNotEmpty &&
+        !imageUrl!.startsWith('http')) {
       return imageUrl; // imageUrl contains a local path (legacy data)
     }
     return null;

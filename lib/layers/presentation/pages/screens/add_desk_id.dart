@@ -4,9 +4,9 @@ import 'package:fastfood/layers/domain/entity/order_entity.dart';
 import 'package:fastfood/layers/domain/entity/product_entity.dart';
 import 'package:fastfood/layers/presentation/extension/extensions.dart';
 import 'package:fastfood/layers/presentation/pages/home_page.dart';
+import 'package:fastfood/layers/presentation/utils/responsive_utils.dart';
 import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'dart:math' as math;
 
@@ -177,6 +177,12 @@ class _AddDeskIdState extends State<AddDeskId> {
     fetchTakenDeskIds();
   }
 
+  @override
+  void dispose() {
+    widget.product.clear();
+    super.dispose();
+  }
+
   Future<void> fetchTakenDeskIds() async {
     final firestore = FirebaseFirestore.instance;
 
@@ -287,24 +293,24 @@ class _AddDeskIdState extends State<AddDeskId> {
 
     final result = await showDialog<bool>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(context.rBorderRadius(16)),
           ),
           title: Row(
             children: [
               Icon(
                 Icons.table_restaurant,
                 color: Colors.amber.shade700,
-                size: 28.sp,
+                size: context.rIconSize(28),
               ),
-              Gap(12.w),
+              Gap(context.rSpacing(12)),
               Text(
                 'Stol tanlashni tasdiqlash',
                 style: TextStyle(
-                  fontSize: 20.sp,
+                  fontSize: context.rFontSize(20),
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
@@ -316,10 +322,10 @@ class _AddDeskIdState extends State<AddDeskId> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: EdgeInsets.all(12.w),
+                padding: EdgeInsets.all(context.rSpacing(12)),
                 decoration: BoxDecoration(
                   color: Colors.amber.shade50,
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(context.rBorderRadius(8)),
                   border: Border.all(color: Colors.amber.shade200),
                 ),
                 child: Row(
@@ -327,13 +333,13 @@ class _AddDeskIdState extends State<AddDeskId> {
                     Icon(
                       Icons.confirmation_number,
                       color: Colors.amber.shade700,
-                      size: 24.sp,
+                      size: context.rIconSize(24),
                     ),
-                    Gap(8.w),
+                    Gap(context.rSpacing(8)),
                     Text(
                       'Desk #$deskNumber',
                       style: TextStyle(
-                        fontSize: 18.sp,
+                        fontSize: context.rFontSize(18),
                         fontWeight: FontWeight.bold,
                         color: Colors.amber.shade700,
                       ),
@@ -341,20 +347,20 @@ class _AddDeskIdState extends State<AddDeskId> {
                   ],
                 ),
               ),
-              Gap(16.h),
+              Gap(context.rSpacing(16)),
               Text(
                 'Ishonchingiz komilmi?',
                 style: TextStyle(
-                  fontSize: 18.sp,
+                  fontSize: context.rFontSize(18),
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
-              Gap(8.h),
+              Gap(context.rSpacing(8)),
               Text(
                 'Ushbu stol uchun buyurtmalarni qabul qilmoqchimisiz?',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: context.rFontSize(16),
                   color: Colors.grey.shade700,
                 ),
               ),
@@ -366,7 +372,7 @@ class _AddDeskIdState extends State<AddDeskId> {
               child: Text(
                 'Bekor qilish',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: context.rFontSize(16),
                   color: Colors.grey.shade600,
                   fontWeight: FontWeight.w500,
                 ),
@@ -378,14 +384,14 @@ class _AddDeskIdState extends State<AddDeskId> {
                 backgroundColor: Colors.amber.shade700,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(context.rBorderRadius(8)),
                 ),
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                padding: EdgeInsets.symmetric(horizontal: context.rSpacing(20), vertical: context.rSpacing(10)),
               ),
               child: Text(
                 'Qabul qilish',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: context.rFontSize(16),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -452,7 +458,7 @@ class _AddDeskIdState extends State<AddDeskId> {
 
   @override
   Widget build(BuildContext context) {
-    int crossAxisCount = MediaQuery.of(context).size.width >= 600 ? 4 : 2;
+    int crossAxisCount = ResponsiveUtils.getGridCrossAxisCount(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -467,7 +473,7 @@ class _AddDeskIdState extends State<AddDeskId> {
         centerTitle: true,
         title: Text(
           "Bo'sh joyni tanlang",
-          style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: context.rFontSize(22), fontWeight: FontWeight.bold),
         ),
         scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
@@ -503,7 +509,7 @@ class _AddDeskIdState extends State<AddDeskId> {
               child: Text(
                 'Stol $deskNumber',
                 style: TextStyle(
-                    fontSize: 18.sp,
+                    fontSize: context.rFontSize(18),
                     fontWeight: FontWeight.bold,
                     color: Colors.white),
               ),

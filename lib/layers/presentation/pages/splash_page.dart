@@ -1,7 +1,7 @@
 import 'package:fastfood/layers/presentation/pages/home_page.dart';
 import 'package:fastfood/layers/presentation/pages/screens/order_lis_page.dart';
+import 'package:fastfood/layers/presentation/utils/responsive_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:hive/hive.dart';
 
@@ -26,7 +26,7 @@ Widget build(BuildContext context) {
     body: SafeArea(
       child: Center( // Bu yerda Center qo‘shildi
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.symmetric(horizontal: context.rSpacing(16)),
           child: Column(
             mainAxisSize: MainAxisSize.min, // faqat kerakli balandlikda bo‘ladi
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -35,16 +35,16 @@ Widget build(BuildContext context) {
                 "Kim bo'lib ishlashingizni tanlang",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 20.sp,
+                    fontSize: context.rFontSize(20),
                     fontWeight: FontWeight.bold,
                     color: Colors.white),
               ),
-              Gap(20.h),
+              Gap(context.rSpacing(20)),
               SizedBox(
-                width: MediaQuery.of(context).size.width >= 600
-                    ? 350.w
+                width: context.isTablet || context.isDesktop
+                    ? context.rSpacing(350)
                     : double.infinity,
-                height: 55.h,
+                height: context.rSpacing(55),
                 child: ElevatedButton(
                   onPressed: () {
                     _saveworkType('admin');
@@ -57,18 +57,18 @@ Widget build(BuildContext context) {
                   child: Text(
                     "Admin",
                     style: TextStyle(
-                        fontSize: 19.sp,
+                        fontSize: context.rFontSize(19),
                         fontWeight: FontWeight.bold,
                         color: Colors.amber),
                   ),
                 ),
               ),
-              Gap(10.h),
+              Gap(context.rSpacing(10)),
               SizedBox(
-                width: MediaQuery.of(context).size.width >= 600
-                    ? 350.w
+                width: context.isTablet || context.isDesktop
+                    ? context.rSpacing(350)
                     : double.infinity,
-                height: 55.h,
+                height: context.rSpacing(55),
                 child: ElevatedButton(
                   onPressed: () {
                     _saveworkType('shef');
@@ -82,7 +82,7 @@ Widget build(BuildContext context) {
                   child: Text(
                     "Oshpaz",
                     style: TextStyle(
-                        fontSize: 19.sp,
+                        fontSize: context.rFontSize(19),
                         fontWeight: FontWeight.bold,
                         color: Colors.amber),
                   ),

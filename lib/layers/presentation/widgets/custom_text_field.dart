@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fastfood/layers/presentation/style/app_colors.dart';
+import 'package:fastfood/layers/presentation/utils/responsive_utils.dart';
 
 class CustomTextField extends StatefulWidget {
   final String hintText;
@@ -50,12 +50,12 @@ class _CustomTextFieldState extends State<CustomTextField> {
           Text(
             widget.labelText!,
             style: TextStyle(
-              fontSize: 16.sp,
+              fontSize: context.rFontSize(16),
               fontWeight: FontWeight.w500,
               color: Colors.black87,
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: context.rSpacing(8)),
         ],
         TextFormField(
           controller: widget.controller,
@@ -69,14 +69,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
           onTap: widget.onTap,
           readOnly: widget.readOnly,
           style: TextStyle(
-            fontSize: 16.sp,
+            fontSize: context.rFontSize(16),
             color: Colors.black87,
           ),
           decoration: InputDecoration(
             hintText: widget.hintText,
             hintStyle: TextStyle(
               color: AppColors.textFormFieldTextColor,
-              fontSize: 16.sp,
+              fontSize: context.rFontSize(16),
             ),
             prefixIcon: widget.prefixIcon,
             suffixIcon: widget.isPassword
@@ -95,28 +95,28 @@ class _CustomTextFieldState extends State<CustomTextField> {
             filled: true,
             fillColor: Colors.grey.shade50,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
               borderSide: BorderSide(color: Colors.amber, width: 2),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
               borderSide: BorderSide(color: Colors.red.shade400),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
               borderSide: BorderSide(color: Colors.red.shade400, width: 2),
             ),
             contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 16.h,
+              horizontal: context.rSpacing(16),
+              vertical: context.rSpacing(16),
             ),
           ),
         ),

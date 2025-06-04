@@ -3,10 +3,10 @@ import 'package:fastfood/layers/domain/entity/order_entity.dart';
 import 'package:fastfood/layers/presentation/extension/extensions.dart';
 import 'package:fastfood/layers/presentation/pages/auth/login_page.dart';
 import 'package:fastfood/layers/presentation/pages/splash_page.dart';
+import 'package:fastfood/layers/presentation/utils/responsive_utils.dart';
 import 'package:fastfood/layers/presentation/widgets/show_snack_bar_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:gap/gap.dart';
 
@@ -72,24 +72,24 @@ class _OrderListPageState extends State<OrderListPage> {
   Future<void> _showOrderReadyConfirmation(OrderEntity order) async {
     final bool? shouldMarkReady = await showDialog<bool>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(context.rBorderRadius(16)),
           ),
           title: Row(
             children: [
               Icon(
                 Icons.restaurant_menu,
                 color: Colors.amber.shade700,
-                size: 28.sp,
+                size: context.rIconSize(28),
               ),
-              Gap(12.w),
+              Gap(context.rSpacing(12)),
               Text(
                 'Buyurtma tayyormi?',
                 style: TextStyle(
-                  fontSize: 20.sp,
+                  fontSize: context.rFontSize(20),
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
@@ -101,10 +101,10 @@ class _OrderListPageState extends State<OrderListPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: EdgeInsets.all(12.w),
+                padding: EdgeInsets.all(context.rSpacing(12)),
                 decoration: BoxDecoration(
                   color: Colors.amber.shade50,
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(context.rBorderRadius(8)),
                   border: Border.all(color: Colors.amber.shade200),
                 ),
                 child: Row(
@@ -112,13 +112,13 @@ class _OrderListPageState extends State<OrderListPage> {
                     Icon(
                       Icons.table_restaurant,
                       color: Colors.amber.shade700,
-                      size: 24.sp,
+                      size: context.rIconSize(24),
                     ),
-                    Gap(8.w),
+                    Gap(context.rSpacing(8)),
                     Text(
                       'Stol #${order.userId}',
                       style: TextStyle(
-                        fontSize: 18.sp,
+                        fontSize: context.rFontSize(18),
                         fontWeight: FontWeight.bold,
                         color: Colors.amber.shade700,
                       ),
@@ -126,20 +126,20 @@ class _OrderListPageState extends State<OrderListPage> {
                   ],
                 ),
               ),
-              Gap(16.h),
+              Gap(context.rSpacing(16)),
               Text(
                 'Ishonchingiz komilmi?',
                 style: TextStyle(
-                  fontSize: 18.sp,
+                  fontSize: context.rFontSize(18),
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
-              Gap(8.h),
+              Gap(context.rSpacing(8)),
               Text(
                 'Bu buyurtma tayyormi?',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: context.rFontSize(16),
                   color: Colors.grey.shade700,
                 ),
               ),
@@ -151,7 +151,7 @@ class _OrderListPageState extends State<OrderListPage> {
               child: Text(
                 'Bekor qilish',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: context.rFontSize(16),
                   color: Colors.grey.shade600,
                   fontWeight: FontWeight.w500,
                 ),
@@ -163,14 +163,14 @@ class _OrderListPageState extends State<OrderListPage> {
                 backgroundColor: Colors.amber.shade700,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(context.rBorderRadius(8)),
                 ),
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                padding: EdgeInsets.symmetric(horizontal: context.rSpacing(20), vertical: context.rSpacing(10)),
               ),
               child: Text(
                 'Buyurtma tayyor',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: context.rFontSize(16),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -204,36 +204,36 @@ class _OrderListPageState extends State<OrderListPage> {
   /// Builds a single order item widget with improved styling
   Widget _buildOrderItem(OrderItem item) {
     return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      margin: EdgeInsets.only(bottom: context.rSpacing(8)),
+      padding: EdgeInsets.symmetric(horizontal: context.rSpacing(12), vertical: context.rSpacing(10)),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(context.rBorderRadius(8)),
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         children: [
           // Item icon
           Container(
-            padding: EdgeInsets.all(6.w),
+            padding: EdgeInsets.all(context.rSpacing(6)),
             decoration: BoxDecoration(
               color: Colors.orange.shade100,
-              borderRadius: BorderRadius.circular(6.r),
+              borderRadius: BorderRadius.circular(context.rBorderRadius(6)),
             ),
             child: Icon(
               Icons.restaurant,
-              size: 20.sp,
+              size: context.rIconSize(20),
               color: Colors.orange.shade700,
             ),
           ),
-          Gap(12.w),
+          Gap(context.rSpacing(12)),
 
           // Item name
           Expanded(
             child: Text(
               item.name,
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: context.rFontSize(16),
                 color: Colors.black87,
                 fontWeight: FontWeight.w500,
               ),
@@ -243,15 +243,15 @@ class _OrderListPageState extends State<OrderListPage> {
 
           // Item price
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            padding: EdgeInsets.symmetric(horizontal: context.rSpacing(8), vertical: context.rSpacing(4)),
             decoration: BoxDecoration(
               color: Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(6.r),
+              borderRadius: BorderRadius.circular(context.rBorderRadius(6)),
             ),
             child: Text(
               '${item.quantity.toMoney()} so\'m',
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: context.rFontSize(16),
                 color: Colors.orange.shade700,
                 fontWeight: FontWeight.bold,
               ),
@@ -282,7 +282,7 @@ class _OrderListPageState extends State<OrderListPage> {
         title: Text(
           'Buyurtmalar',
           style: TextStyle(
-            fontSize: 20.sp,
+            fontSize: context.rFontSize(20),
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
@@ -327,10 +327,10 @@ class _OrderListPageState extends State<OrderListPage> {
           orders.sort((a, b) => b.date.compareTo(a.date));
 
           return MasonryGridView.count(
-            crossAxisCount: MediaQuery.of(context).size.width >= 600 ? 2 : 1,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10.h),
+            crossAxisCount: context.isMobile ? 1 : 2,
+            mainAxisSpacing: context.rSpacing(16),
+            crossAxisSpacing: context.rSpacing(16),
+            padding: EdgeInsets.symmetric(horizontal: context.rSpacing(16), vertical: context.rSpacing(10)),
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
@@ -350,20 +350,20 @@ class _OrderListPageState extends State<OrderListPage> {
               return Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.r),
+                  borderRadius: BorderRadius.circular(context.rBorderRadius(15)),
                 ),
                 child: Padding(
-                  padding: EdgeInsets.all(16.w),
+                  padding: EdgeInsets.all(context.rSpacing(16)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Header with table number and order info
                       Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 12.w, vertical: 8.h),
+                            horizontal: context.rSpacing(12), vertical: context.rSpacing(8)),
                         decoration: BoxDecoration(
                           color: Colors.deepPurple.shade50,
-                          borderRadius: BorderRadius.circular(8.r),
+                          borderRadius: BorderRadius.circular(context.rBorderRadius(8)),
                           border: Border.all(color: Colors.deepPurple.shade200),
                         ),
                         child: Row(
@@ -371,15 +371,15 @@ class _OrderListPageState extends State<OrderListPage> {
                             Icon(
                               Icons.table_restaurant,
                               color: Colors.deepPurple,
-                              size: 25.sp,
+                              size: context.rIconSize(25),
                             ),
-                            Gap(8.w),
+                            Gap(context.rSpacing(8)),
                             Text(
                               isTaken
                                   ? 'Stol raqami: $userId'
                                   : 'Dostavka: $userId',
                               style: TextStyle(
-                                fontSize: 18.sp,
+                                fontSize: context.rFontSize(18),
                                 fontWeight: FontWeight.bold,
                                 color: Colors.deepPurple,
                               ),
@@ -403,44 +403,44 @@ class _OrderListPageState extends State<OrderListPage> {
                           ],
                         ),
                       ),
-                      Gap(12.h),
+                      Gap(context.rSpacing(12)),
 
                       // Items list with better layout
                       Column(
                         children:
                             items.map((item) => _buildOrderItem(item)).toList(),
                       ),
-                      Divider(height: 20.h, color: Colors.grey),
+                      Divider(height: context.rSpacing(20), color: Colors.grey),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'Jami:',
                             style: TextStyle(
-                              fontSize: 18.sp,
+                              fontSize: context.rFontSize(18),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
                             '${total.toMoney()} so\'m',
                             style: TextStyle(
-                              fontSize: 18.sp,
+                              fontSize: context.rFontSize(18),
                               fontWeight: FontWeight.bold,
                               color: Colors.green,
                             ),
                           ),
                         ],
                       ),
-                      Gap(12.h),
+                      Gap(context.rSpacing(12)),
 
                       // Status and action section
                       Container(
-                        padding: EdgeInsets.all(10.w),
+                        padding: EdgeInsets.all(context.rSpacing(10)),
                         decoration: BoxDecoration(
                           color: status
                               ? Colors.green.shade50
                               : Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(8.r),
+                          borderRadius: BorderRadius.circular(context.rBorderRadius(8)),
                           border: Border.all(
                             color: status
                                 ? Colors.green.shade200
@@ -454,23 +454,23 @@ class _OrderListPageState extends State<OrderListPage> {
                               color: status
                                   ? Colors.green.shade700
                                   : Colors.orange.shade700,
-                              size: 20.sp,
+                              size: context.rIconSize(20),
                             ),
-                            Gap(8.w),
+                            Gap(context.rSpacing(8)),
                             Text(
                               'Holati:',
                               style: TextStyle(
-                                fontSize: 18.sp,
+                                fontSize: context.rFontSize(18),
                                 fontWeight: FontWeight.w500,
                                 color: Colors.grey.shade700,
                               ),
                             ),
-                            Gap(8.w),
+                            Gap(context.rSpacing(8)),
                             Expanded(
                               child: Text(
                                 status ? 'Bajarildi' : '',
                                 style: TextStyle(
-                                  fontSize: 18.sp,
+                                  fontSize: context.rFontSize(18),
                                   fontWeight: FontWeight.bold,
                                   color: status
                                       ? Colors.green.shade700
@@ -486,21 +486,21 @@ class _OrderListPageState extends State<OrderListPage> {
                                   backgroundColor: Colors.amber.shade700,
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
+                                    borderRadius: BorderRadius.circular(context.rBorderRadius(8)),
                                   ),
                                   padding: EdgeInsets.symmetric(
-                                      horizontal: 16.w, vertical: 8.h),
+                                      horizontal: context.rSpacing(16), vertical: context.rSpacing(8)),
                                   elevation: 2,
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.check, size: 16.sp),
-                                    Gap(4.w),
+                                    Icon(Icons.check, size: context.rIconSize(16)),
+                                    Gap(context.rSpacing(4)),
                                     Text(
                                       'Tayyorlanmoqda',
                                       style: TextStyle(
-                                        fontSize: 18.sp,
+                                        fontSize: context.rFontSize(18),
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -510,7 +510,7 @@ class _OrderListPageState extends State<OrderListPage> {
                           ],
                         ),
                       ),
-                      Gap(8.h),
+                      Gap(context.rSpacing(8)),
                       // ElevatedButton(
                       //     onPressed: () {},
                       //     style: ElevatedButton.styleFrom(
