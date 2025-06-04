@@ -1332,7 +1332,7 @@ class _AddProductModalState extends State<AddProductModal> {
   /// Submits the product to Firebase
   Future<void> _submitProduct() async {
     final name = _nameController.text.trim();
-    final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
+    final String prices = _priceController.text.trim();
 
     // Validation
     if (name.isEmpty) {
@@ -1340,10 +1340,6 @@ class _AddProductModalState extends State<AddProductModal> {
       return;
     }
 
-    if (price <= 0) {
-      ShowSnackBar.show(context, "To'g'ri narx kiriting");
-      return;
-    }
 
     if (_selectedImage == null) {
       ShowSnackBar.show(context, "Rasm tanlang");
@@ -1380,13 +1376,20 @@ class _AddProductModalState extends State<AddProductModal> {
         localImagePath = uploadedImageUrl;
         imageUrl = null;
       }
+    final cleanedPrice = prices.replaceAll(RegExp(r'[^0-9]'), '');
+    final int? price = int.tryParse(cleanedPrice);
+
+    if (price == null) {
+      ShowSnackBar.show(context, "Iltimos, narxni to‘g‘ri kiriting");
+      return;
+    }
 
       ProductEntity product = ProductEntity(
         name: name,
         date: DateTime.now(),
         localImagePath: localImagePath,
         imageUrl: imageUrl,
-        price: price,
+        price: price.toDouble(),
       );
 
       var myTask = await db.collection('products').add(product.toJson());
