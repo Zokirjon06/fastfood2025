@@ -47,19 +47,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
   int _currentBatchIndex = 0;
-  late final int _batchSize; // Items per batch (responsive)
+  int _batchSize = 20; // Items per batch (responsive) - default value
   final List<ProductEntity> _loadedProducts = []; // Cache for loaded products
-  final Set<int> _visibleIndices = <int>{}; // Track visible items for memory management
+  final Set<int> _visibleIndices =
+      <int>{}; // Track visible items for memory management
 
   // Memory management constants (responsive)
-  late final int _maxCachedItems; // Maximum items to keep in memory
-  late final int _preloadThreshold; // Items before end to trigger loading
+  int _maxCachedItems = 60; // Maximum items to keep in memory - default value
+  int _preloadThreshold = 4; // Items before end to trigger loading - default value
   static const double _scrollThreshold = 0.8; // 80% scroll to trigger loading
 
   // Device-specific pagination constants
-  static const int _mobileItemsPerPage = 6; // 6 products per page for mobile only
+  static const int _mobileItemsPerPage =
+      6; // 6 products per page for mobile only
   bool _wasMobileLastFrame = false; // Track device type changes for state reset
-
 
   // Get items per page based on screen size (only used for mobile pagination)
   int get _itemsPerPage {
@@ -67,7 +68,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return _mobileItemsPerPage;
   }
 
-  
   @override
   void initState() {
     super.initState();
@@ -91,14 +91,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _hasMoreData = true;
   }
 
+  bool _isInitialized = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Initialize responsive constants after context is available
-    _batchSize = ResponsiveUtils.getBatchSize(context);
-    _maxCachedItems = ResponsiveUtils.getOptimalCacheSize(context);
-    _preloadThreshold = ResponsiveUtils.getPreloadThreshold(context);
+    // Initialize responsive constants only once after context is available
+    if (!_isInitialized) {
+      _batchSize = ResponsiveUtils.getBatchSize(context);
+      _maxCachedItems = ResponsiveUtils.getOptimalCacheSize(context);
+      _preloadThreshold = ResponsiveUtils.getPreloadThreshold(context);
+      _isInitialized = true;
+    }
 
     // Check for device type changes and reset state if needed
     _handleDeviceTypeChange();
@@ -132,19 +137,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   @override
-    void dispose() {
+  void dispose() {
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     _tabController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     _pageController.dispose();
+    _isLoadingMore = false;
     super.dispose();
   }
 
   /// Enhanced scroll listener for memory-efficient lazy loading
   void _scrollListener() {
-    if (!_scrollController.hasClients || _isLoadingMore || !_hasMoreData) return;
+    if (!_scrollController.hasClients || _isLoadingMore || !_hasMoreData) {
+      return;
+    }
 
     final position = _scrollController.position;
     final maxScroll = position.maxScrollExtent;
@@ -177,7 +185,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Check if we've reached the end of available data
           // This would be determined by your actual data source
           // For now, we'll simulate having more data for the first few batches
-          if (_currentBatchIndex >= 10) { // Simulate max 10 batches
+          if (_currentBatchIndex >= 10) {
+            // Simulate max 10 batches
             _hasMoreData = false;
           }
 
@@ -197,16 +206,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final scrollOffset = position.pixels;
 
     // Calculate visible range with some buffer
-    final startOffset = (scrollOffset - viewportHeight * 0.5).clamp(0.0, double.infinity);
+    final startOffset =
+        (scrollOffset - viewportHeight * 0.5).clamp(0.0, double.infinity);
     final endOffset = scrollOffset + viewportHeight * 1.5;
 
     // This is a simplified calculation - in a real implementation,
     // you'd calculate based on actual item heights and positions
     final crossAxisCount = ResponsiveUtils.getGridCrossAxisCount(context);
-    final estimatedItemHeight = ResponsiveUtils.getCardHeight(context) + 16; // Card height + spacing
+    final estimatedItemHeight =
+        ResponsiveUtils.getCardHeight(context) + 16; // Card height + spacing
 
-    final startIndex = ((startOffset / estimatedItemHeight).floor() * crossAxisCount).clamp(0, _loadedProducts.length - 1);
-    final endIndex = ((endOffset / estimatedItemHeight).ceil() * crossAxisCount).clamp(0, _loadedProducts.length);
+    final startIndex =
+        ((startOffset / estimatedItemHeight).floor() * crossAxisCount)
+            .clamp(0, _loadedProducts.length - 1);
+    final endIndex = ((endOffset / estimatedItemHeight).ceil() * crossAxisCount)
+        .clamp(0, _loadedProducts.length);
 
     _visibleIndices.clear();
     for (int i = startIndex; i < endIndex; i++) {
@@ -224,8 +238,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     if (sortedIndices.isNotEmpty) {
       final bufferSize = _preloadThreshold * 2;
-      final startKeep = (sortedIndices.first - bufferSize).clamp(0, _loadedProducts.length);
-      final endKeep = (sortedIndices.last + bufferSize).clamp(0, _loadedProducts.length);
+      final startKeep =
+          (sortedIndices.first - bufferSize).clamp(0, _loadedProducts.length);
+      final endKeep =
+          (sortedIndices.last + bufferSize).clamp(0, _loadedProducts.length);
 
       for (int i = startKeep; i < endKeep; i++) {
         if (i < _loadedProducts.length) {
@@ -245,18 +261,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     }
   }
+
   /// Enters search mode and shows search overlay
   void _enterSearchMode() {
-    setState(() {
-      _isSearchMode = true;
-    });
-    // Focus the search field after the UI updates
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!_isSearchMode) {
+      setState(() {
+        _isSearchMode = true;
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _searchFocusNode.requestFocus();
+      });
+    } else {
+      // Agar search modeda bo‘lsa, yana tozalab qayta qidiruvni boshlash mumkin
+      _searchController.clear();
+      context.read<ProductCubit>().getProducts('');
       _searchFocusNode.requestFocus();
-    });
+    }
   }
-
-
 
   /// Reset lazy loading state (useful when search changes or data refreshes)
   void _resetLazyLoading() {
@@ -269,19 +291,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-
-
   /// Exits search mode and returns to normal view
   void _exitSearchMode() {
-    setState(() {
-      _isSearchMode = false;
-      _searchController.clear();
-    });
-    // Reset lazy loading state and clear search results
+  if (!_isSearchMode) return;
+  setState(() {
+    _isSearchMode = false;
+    _searchController.clear();
+  });
+
     _resetLazyLoading();
-    context.read<ProductCubit>().getProducts('');
-    _searchFocusNode.unfocus();
-  }
+  // Searchni tozalash
+  context.read<ProductCubit>().getProducts('');
+
+  // Fokusni olib tashlash
+  _searchFocusNode.unfocus();
+}
+
 
   /// Calculates total number of pages based on products count
   int _getTotalPages(int totalProducts) {
@@ -289,7 +314,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   /// Gets products for current page
-  List<ProductEntity> _getProductsForPage(List<ProductEntity> allProducts, int page) {
+  List<ProductEntity> _getProductsForPage(
+      List<ProductEntity> allProducts, int page) {
     final startIndex = page * _itemsPerPage;
     final endIndex = (startIndex + _itemsPerPage).clamp(0, allProducts.length);
 
@@ -394,7 +420,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     } catch (e) {
       if (mounted) {
-        ShowSnackBar.show(context, 'Failed to create delivery order: ${e.toString()}');
+        ShowSnackBar.show(
+            context, 'Failed to create delivery order: ${e.toString()}');
       }
     }
   }
@@ -427,7 +454,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       actions: [
         // Search Button
         IconButton(
-          onPressed: _enterSearchMode,
+          onPressed: () {
+            if (!_isSearchMode) {
+              _enterSearchMode();
+            } else {
+              // Foydalanuvchi allaqachon searchda bo‘lsa, fokusni qayta so'raymiz
+              _searchFocusNode.requestFocus();
+            }
+          },
           icon: Icon(
             Icons.search,
             size: context.rIconSize(30),
@@ -519,19 +553,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     width: MediaQuery.of(context).size.width >= 600
                         ? MediaQuery.of(context).size.width * 0.88
                         : MediaQuery.of(context).size.width * 0.74,
-                    padding:
-                        EdgeInsets.symmetric(horizontal: context.rSpacing(16), vertical: context.rSpacing(12)),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: context.rSpacing(16),
+                        vertical: context.rSpacing(12)),
                     decoration: BoxDecoration(
                       color: Colors.amber,
-                      borderRadius: BorderRadius.circular(context.rBorderRadius(20)),
+                      borderRadius:
+                          BorderRadius.circular(context.rBorderRadius(20)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Buyurtma: $shop ta',
-                          style:
-                              TextStyle(fontSize: context.rFontSize(18), color: Colors.blue[900]),
+                          style: TextStyle(
+                              fontSize: context.rFontSize(18),
+                              color: Colors.blue[900]),
                         ),
                       ],
                     ),
@@ -559,7 +596,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     },
                     backgroundColor: Colors.amber,
                     child: Icon(
-                      _tabController.index == 0 ? Icons.send : Icons.delivery_dining,
+                      _tabController.index == 0
+                          ? Icons.send
+                          : Icons.delivery_dining,
                       color: Colors.blue[900],
                     ),
                   ),
@@ -593,7 +632,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               fontWeight: FontWeight.bold,
             ),
             tabs: const [
-              Tab(text: 'Zal',),
+              Tab(
+                text: 'Zal',
+              ),
               Tab(text: 'Dostavka'),
             ],
           ),
@@ -622,7 +663,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         setState(() {
           _currentPage = 0;
         });
-        _pageController.animateToPage(0, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+        _pageController.animateToPage(0,
+            duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
       });
     }
     return _buildProductView();
@@ -705,7 +747,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Column(
       children: [
         // Page indicator and info
-        if (totalPages > 1) _buildMobilePageHeader(allProducts.length, totalPages),
+        if (totalPages > 1)
+          _buildMobilePageHeader(allProducts.length, totalPages),
 
         // Products grid with pagination
         Expanded(
@@ -741,7 +784,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         // Product count indicator for larger screens
         if (displayProducts.isNotEmpty)
           Container(
-            padding: EdgeInsets.symmetric(horizontal: context.rSpacing(16), vertical: context.rSpacing(8)),
+            padding: EdgeInsets.symmetric(
+                horizontal: context.rSpacing(16),
+                vertical: context.rSpacing(8)),
             margin: EdgeInsets.only(bottom: context.rSpacing(8)),
             decoration: BoxDecoration(
               color: Colors.amber.shade50,
@@ -827,10 +872,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   /// Builds the page header with current page info for mobile
   Widget _buildMobilePageHeader(int totalProducts, int totalPages) {
     final startItem = (_currentPage * _itemsPerPage) + 1;
-    final endItem = ((_currentPage + 1) * _itemsPerPage).clamp(1, totalProducts);
+    final endItem =
+        ((_currentPage + 1) * _itemsPerPage).clamp(1, totalProducts);
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: context.rSpacing(16), vertical: context.rSpacing(12)),
+      padding: EdgeInsets.symmetric(
+          horizontal: context.rSpacing(16), vertical: context.rSpacing(12)),
       margin: EdgeInsets.only(bottom: context.rSpacing(16)),
       decoration: BoxDecoration(
         color: Colors.amber.shade50,
@@ -849,7 +896,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: context.rSpacing(12), vertical: context.rSpacing(6)),
+            padding: EdgeInsets.symmetric(
+                horizontal: context.rSpacing(12),
+                vertical: context.rSpacing(6)),
             decoration: BoxDecoration(
               color: Colors.amber.shade700,
               borderRadius: BorderRadius.circular(context.rBorderRadius(20)),
@@ -869,7 +918,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   /// Get products for continuous scroll with lazy loading
-  List<ProductEntity> _getProductsForContinuousScroll(List<ProductEntity> allProducts) {
+  List<ProductEntity> _getProductsForContinuousScroll(
+      List<ProductEntity> allProducts) {
     // Calculate how many items to show based on current batch
     final itemsToShow = (_currentBatchIndex + 1) * _batchSize;
     final endIndex = itemsToShow.clamp(0, allProducts.length);
@@ -887,10 +937,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   /// Preload data for smoother mobile page transitions
-  void _preloadMobilePageData(List<ProductEntity> allProducts, int currentPage) {
+  void _preloadMobilePageData(
+      List<ProductEntity> allProducts, int currentPage) {
     // Preload next page data if available
     if (currentPage + 1 < _getTotalPages(allProducts.length)) {
-      final nextPageProducts = _getProductsForPage(allProducts, currentPage + 1);
+      final nextPageProducts =
+          _getProductsForPage(allProducts, currentPage + 1);
       // Cache images for next page products
       for (final product in nextPageProducts) {
         if (product.hasUploadedImage) {
@@ -948,7 +1000,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             icon: Icon(
               Icons.chevron_left,
               size: context.rIconSize(32),
-              color: _currentPage > 0 ? Colors.amber.shade700 : Colors.grey.shade400,
+              color: _currentPage > 0
+                  ? Colors.amber.shade700
+                  : Colors.grey.shade400,
             ),
           ),
 
@@ -963,11 +1017,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Next button
           IconButton(
-            onPressed: _currentPage < totalPages - 1 ? () => _nextPage(totalPages) : null,
+            onPressed: _currentPage < totalPages - 1
+                ? () => _nextPage(totalPages)
+                : null,
             icon: Icon(
               Icons.chevron_right,
               size: context.rIconSize(32),
-              color: _currentPage < totalPages - 1 ? Colors.amber.shade700 : Colors.grey.shade400,
+              color: _currentPage < totalPages - 1
+                  ? Colors.amber.shade700
+                  : Colors.grey.shade400,
             ),
           ),
         ],
@@ -1017,7 +1075,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           child: Text(
             '${index + 1}',
             style: TextStyle(
-              fontSize: isCurrentPage ? context.rFontSize(14) : context.rFontSize(12),
+              fontSize:
+                  isCurrentPage ? context.rFontSize(14) : context.rFontSize(12),
               fontWeight: isCurrentPage ? FontWeight.bold : FontWeight.normal,
               color: isCurrentPage ? Colors.white : Colors.grey.shade700,
             ),
@@ -1027,14 +1086,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-
-
-
-
-
-
   /// Builds a memory-efficient product card with optimized image loading
-  Widget _buildMemoryEfficientProductCard(ProductEntity product, bool isSelected, int index) {
+  Widget _buildMemoryEfficientProductCard(
+      ProductEntity product, bool isSelected, int index) {
     return Stack(
       children: [
         InkWell(
@@ -1061,82 +1115,78 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               _resetLazyLoading();
             }
           },
-              child: Container(
-                padding: EdgeInsets.only(bottom: context.rSpacing(20)),
-                decoration: BoxDecoration(
-                  color: isSelected && send
-                      ? Colors.yellow.shade100
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(context.rBorderRadius(15)),
-                  border: Border.all(
-                      color: Colors.grey.shade300, width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.2),
-                      blurRadius: 6,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
+          child: Container(
+            padding: EdgeInsets.only(bottom: context.rSpacing(20)),
+            decoration: BoxDecoration(
+              color: isSelected && send ? Colors.yellow.shade100 : Colors.white,
+              borderRadius: BorderRadius.circular(context.rBorderRadius(15)),
+              border: Border.all(color: Colors.grey.shade300, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withValues(alpha: 0.2),
+                  blurRadius: 6,
+                  offset: Offset(0, 4),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(context.rBorderRadius(15))),
-                      child: _buildOptimizedProductImage(product),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(context.rSpacing(10)),
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            product.name,
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: context.rFontSize(18)),
-                          ),
-                          Gap(context.rSpacing(6)),
-                          Text(
-                            "${product.price.toMoney()} so'm",
-                            style: TextStyle(
-                                fontSize: context.rFontSize(16),
-                                color: Colors.deepOrange),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              ],
             ),
-            if (isSelected && send)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: IconButton(
-                  icon: Icon(
-                    Icons.remove_circle,
-                    color: Colors.red,
-                    size: context.rIconSize(28),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      if (isSelected) {
-                        selectedProducts.remove(product);
-                        money -= product.price;
-                        shop--;
-                      }
-                      send = selectedProducts.isNotEmpty;
-                    });
-                  },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(context.rBorderRadius(15))),
+                  child: _buildOptimizedProductImage(product),
                 ),
+                Padding(
+                  padding: EdgeInsets.all(context.rSpacing(10)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: context.rFontSize(18)),
+                      ),
+                      Gap(context.rSpacing(6)),
+                      Text(
+                        "${product.price.toMoney()} so'm",
+                        style: TextStyle(
+                            fontSize: context.rFontSize(16),
+                            color: Colors.deepOrange),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (isSelected && send)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: IconButton(
+              icon: Icon(
+                Icons.remove_circle,
+                color: Colors.red,
+                size: context.rIconSize(28),
               ),
-          ],
-        );
-      }
+              onPressed: () {
+                setState(() {
+                  if (isSelected) {
+                    selectedProducts.remove(product);
+                    money -= product.price;
+                    shop--;
+                  }
+                  send = selectedProducts.isNotEmpty;
+                });
+              },
+            ),
+          ),
+      ],
+    );
+  }
 
   /// Builds optimized product image with memory management
   Widget _buildOptimizedProductImage(ProductEntity product) {
@@ -1158,8 +1208,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           return _buildImagePlaceholder('Mahalliy rasm yuklanmadi');
         },
         // Memory optimization for local images
-        cacheHeight: (ResponsiveUtils.getCardHeight(context) * 0.6 *
-                     MediaQuery.of(context).devicePixelRatio).round(),
+        cacheHeight: (ResponsiveUtils.getCardHeight(context) *
+                0.6 *
+                MediaQuery.of(context).devicePixelRatio)
+            .round(),
       );
     }
 
@@ -1188,8 +1240,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           return _buildImagePlaceholder('Rasm yuklanmadi');
         },
         // Memory optimization: cache images with appropriate size
-        cacheHeight: (ResponsiveUtils.getCardHeight(context) * 0.6 *
-                     MediaQuery.of(context).devicePixelRatio).round(),
+        cacheHeight: (ResponsiveUtils.getCardHeight(context) *
+                0.6 *
+                MediaQuery.of(context).devicePixelRatio)
+            .round(),
       );
     }
 
@@ -1222,8 +1276,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
-
-
 }
 
 /// Modal widget for adding new products
@@ -1268,7 +1320,8 @@ class _AddProductModalState extends State<AddProductModal> {
 
       if (status.isPermanentlyDenied) {
         if (mounted) {
-          ShowSnackBar.show(context, "Ruxsat rad etilgan. Iltimos, sozlamalarga o'ting va ruxsatlarni yoqing");
+          ShowSnackBar.show(context,
+              "Ruxsat rad etilgan. Iltimos, sozlamalarga o'ting va ruxsatlarni yoqing");
         }
         await openAppSettings();
         return;
@@ -1288,7 +1341,8 @@ class _AddProductModalState extends State<AddProductModal> {
           // Validate image file
           if (!ImageUploadService.isValidImageFile(imageFile)) {
             if (mounted) {
-              ShowSnackBar.show(context, "Noto'g'ri fayl formati. Iltimos, rasm faylini tanlang.");
+              ShowSnackBar.show(context,
+                  "Noto'g'ri fayl formati. Iltimos, rasm faylini tanlang.");
             }
             return;
           }
@@ -1296,7 +1350,8 @@ class _AddProductModalState extends State<AddProductModal> {
           // Check file size (max 5MB)
           if (!ImageUploadService.isValidFileSize(imageFile)) {
             if (mounted) {
-              ShowSnackBar.show(context, "Fayl hajmi juda katta. Maksimal 5MB ruxsat etilgan.");
+              ShowSnackBar.show(context,
+                  "Fayl hajmi juda katta. Maksimal 5MB ruxsat etilgan.");
             }
             return;
           }
@@ -1311,7 +1366,8 @@ class _AddProductModalState extends State<AddProductModal> {
         }
       } else {
         if (mounted) {
-          ShowSnackBar.show(context, "Rasmlarni tanlash uchun ruxsat berilmagan");
+          ShowSnackBar.show(
+              context, "Rasmlarni tanlash uchun ruxsat berilmagan");
         }
       }
     } catch (e) {
@@ -1340,7 +1396,6 @@ class _AddProductModalState extends State<AddProductModal> {
       return;
     }
 
-
     if (_selectedImage == null) {
       ShowSnackBar.show(context, "Rasm tanlang");
       return;
@@ -1359,9 +1414,11 @@ class _AddProductModalState extends State<AddProductModal> {
       }
 
       // Upload image to Firebase Storage with retry mechanism
-      final uploadedImageUrl = await ImageUploadService.uploadProductImageWithRetry(
+      final uploadedImageUrl =
+          await ImageUploadService.uploadProductImageWithRetry(
         imageFile: _selectedImage!,
-        fileName: 'product_${name.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}',
+        fileName:
+            'product_${name.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}',
         maxRetries: 3,
       );
 
@@ -1376,13 +1433,15 @@ class _AddProductModalState extends State<AddProductModal> {
         localImagePath = uploadedImageUrl;
         imageUrl = null;
       }
-    final cleanedPrice = prices.replaceAll(RegExp(r'[^0-9]'), '');
-    final int? price = int.tryParse(cleanedPrice);
+      final cleanedPrice = prices.replaceAll(RegExp(r'[^0-9]'), '');
+      final int? price = int.tryParse(cleanedPrice);
 
-    if (price == null) {
-      ShowSnackBar.show(context, "Iltimos, narxni to‘g‘ri kiriting");
-      return;
-    }
+      if (price == null) {
+        if (mounted) {
+          ShowSnackBar.show(context, "Iltimos, narxni to‘g‘ri kiriting");
+        }
+        return;
+      }
 
       ProductEntity product = ProductEntity(
         name: name,
@@ -1393,17 +1452,13 @@ class _AddProductModalState extends State<AddProductModal> {
       );
 
       var myTask = await db.collection('products').add(product.toJson());
-      await db
-          .collection("products")
-          .doc(myTask.id)
-          .update({"id": myTask.id});
+      await db.collection("products").doc(myTask.id).update({"id": myTask.id});
 
       if (mounted) {
         ShowSnackBar.show(context, "Mahsulot muvaffaqiyatli qo'shildi!");
         Navigator.of(context).pop(); // Close modal
         widget.onProductAdded(); // Refresh products
       }
-
     } catch (e) {
       debugPrint('Error submitting product: $e');
       if (mounted) {
@@ -1411,17 +1466,24 @@ class _AddProductModalState extends State<AddProductModal> {
 
         // Provide specific error messages
         if (e.toString().contains('Storage bucket not found')) {
-          errorMessage = "Firebase Storage sozlanmagan. Mahsulot mahalliy saqlanadi.";
+          errorMessage =
+              "Firebase Storage sozlanmagan. Mahsulot mahalliy saqlanadi.";
         } else if (e.toString().contains('Unauthorized access')) {
-          errorMessage = "Rasm yuklash uchun ruxsat yo'q. Mahsulot mahalliy saqlanadi.";
+          errorMessage =
+              "Rasm yuklash uchun ruxsat yo'q. Mahsulot mahalliy saqlanadi.";
         } else if (e.toString().contains('User not authenticated')) {
-          errorMessage = "Foydalanuvchi autentifikatsiya qilinmagan. Qayta login qiling.";
+          errorMessage =
+              "Foydalanuvchi autentifikatsiya qilinmagan. Qayta login qiling.";
         } else if (e.toString().contains('File size too large')) {
           errorMessage = "Fayl hajmi juda katta. Maksimal 10MB ruxsat etilgan.";
-        } else if (e.toString().contains('Both Firebase Storage and local storage failed')) {
+        } else if (e
+            .toString()
+            .contains('Both Firebase Storage and local storage failed')) {
           errorMessage = "Rasm saqlashda xatolik. Qaytadan urinib ko'ring.";
-        } else if (e.toString().contains('Firebase Storage') && e.toString().contains('local storage')) {
-          errorMessage = "Mahsulot muvaffaqiyatli qo'shildi (mahalliy saqlandi).";
+        } else if (e.toString().contains('Firebase Storage') &&
+            e.toString().contains('local storage')) {
+          errorMessage =
+              "Mahsulot muvaffaqiyatli qo'shildi (mahalliy saqlandi).";
         }
 
         ShowSnackBar.show(context, errorMessage);
@@ -1441,7 +1503,8 @@ class _AddProductModalState extends State<AddProductModal> {
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(context.rBorderRadius(20))),
+        borderRadius: BorderRadius.vertical(
+            top: Radius.circular(context.rBorderRadius(20))),
       ),
       child: Column(
         children: [
@@ -1500,15 +1563,18 @@ class _AddProductModalState extends State<AddProductModal> {
                     decoration: InputDecoration(
                       hintText: 'Mahsulot nomini kiriting',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
+                        borderRadius:
+                            BorderRadius.circular(context.rBorderRadius(12)),
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
+                        borderRadius:
+                            BorderRadius.circular(context.rBorderRadius(12)),
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
+                        borderRadius:
+                            BorderRadius.circular(context.rBorderRadius(12)),
                         borderSide: BorderSide(color: Colors.amber, width: 2),
                       ),
                       filled: true,
@@ -1536,15 +1602,18 @@ class _AddProductModalState extends State<AddProductModal> {
                       hintText: 'Narxni kiriting',
                       suffixText: 'so\'m',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
+                        borderRadius:
+                            BorderRadius.circular(context.rBorderRadius(12)),
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
+                        borderRadius:
+                            BorderRadius.circular(context.rBorderRadius(12)),
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
+                        borderRadius:
+                            BorderRadius.circular(context.rBorderRadius(12)),
                         borderSide: BorderSide(color: Colors.amber, width: 2),
                       ),
                       filled: true,
@@ -1569,7 +1638,8 @@ class _AddProductModalState extends State<AddProductModal> {
                     width: double.infinity,
                     height: context.rHeight(25),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
+                      borderRadius:
+                          BorderRadius.circular(context.rBorderRadius(12)),
                       border: Border.all(color: Colors.grey.shade300),
                       color: Colors.grey.shade50,
                     ),
@@ -1577,7 +1647,8 @@ class _AddProductModalState extends State<AddProductModal> {
                         ? Stack(
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
+                                borderRadius: BorderRadius.circular(
+                                    context.rBorderRadius(12)),
                                 child: Image.file(
                                   _selectedImage!,
                                   width: double.infinity,
@@ -1591,7 +1662,8 @@ class _AddProductModalState extends State<AddProductModal> {
                                 child: GestureDetector(
                                   onTap: _removeSelectedImage,
                                   child: Container(
-                                    padding: EdgeInsets.all(context.rSpacing(4)),
+                                    padding:
+                                        EdgeInsets.all(context.rSpacing(4)),
                                     decoration: BoxDecoration(
                                       color: Colors.red,
                                       shape: BoxShape.circle,
@@ -1647,7 +1719,8 @@ class _AddProductModalState extends State<AddProductModal> {
                   backgroundColor: Colors.amber,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(context.rBorderRadius(12)),
+                    borderRadius:
+                        BorderRadius.circular(context.rBorderRadius(12)),
                   ),
                   elevation: 2,
                 ),
@@ -1660,7 +1733,8 @@ class _AddProductModalState extends State<AddProductModal> {
                             height: context.rSpacing(20),
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           ),
                           Gap(context.rSpacing(12)),
@@ -1688,4 +1762,3 @@ class _AddProductModalState extends State<AddProductModal> {
     );
   }
 }
-
